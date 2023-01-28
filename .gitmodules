@@ -1,0 +1,3 @@
+[submodule "src/module/session"]
+	path = src/module/session
+	url = https://github.com/paulwainaina/session
