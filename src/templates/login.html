@@ -1,0 +1,53 @@
+{{template "header"}}
+    <title>{{.Title}}</title>
+{{template "body"}}  
+    <div class="container" style="margin:auto;width:50%;padding:20px">
+        <form >
+            <div class="mb-3">
+                <label for="useremail" class="form-label">Email address</label>
+                <input type="email" class="form-control" id="useremail" placeholder="name@example.com" required>
+            </div>
+            <div class="mb-3">
+                <label for="userpassword" class="form-label">Password</label>
+                <input type="password" class="form-control" id="userpassword" placeholder="password" required>
+            </div>
+            <div class="mb-3">
+                <button type="button" onClick='login()' class="btn btn-primary">Login</button>
+            </div>
+           
+        </form> 
+        <div id="errorDiv"></div>
+    </div>
+{{template "footer"}}
+    <script>
+        function login(){            
+            let y=document.getElementById('errorDiv')
+            let data=JSON.stringify({"Email":document.getElementById("useremail").value,"Password":document.getElementById("userpassword").value})
+            fetch('http://127.0.0.1:8080/login',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
+                (result)=>{                    
+                    if (!result.ok){                    
+                        throw new Error(result.statusText);
+                    }
+                    return result.json();
+                }
+            ).then(
+                (data)=>{       
+                    if (!Object.keys(data).length){
+                        y.className="alter alter-warning"
+                        y.innerHTML="Incorrect credentials"
+                        y.role="alert"
+                    }else{
+                        y.className="alter alter-success"
+                        y.innerHTML="Correct credentials"
+                        y.role="alert"
+                        window.location.href="http://127.0.0.1:8080/index"
+                    }
+                }
+            ).catch((e)=>{
+                y.className="alter alter-danger"
+                y.innerText=e
+                y.role="alert"
+            })            
+            setTimeout(()=>{ y.innerText=""},5000)
+        }        
+    </script>

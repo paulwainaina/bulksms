@@ -1,0 +1,31 @@
+services:
+  bulksms:
+    container_name: bulksms
+    restart: always
+    build: ./src
+    ports:
+      - "8080:8080"
+    depends_on:
+      - bulkdb 
+    networks:
+      - bulk
+      
+  bulkdb:
+    container_name: bulkdb
+    image: mongo:latest
+    restart: always
+    ports:
+      - "27017"
+    networks:
+      - bulk
+    volumes:
+      - ./config:/etc/mongo/
+      - ./data:/data/db
+    command: ["mongod","--config","/etc/mongo/mongod.conf"]
+
+networks:
+  bulk:
+    driver: bridge
+
+volumes:
+  data:

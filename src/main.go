@@ -1,19 +1,27 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"text/template"
+	"time"
 
 	"example.com/members"
-	"example.com/users"
 	"example.com/session"
+	"example.com/users"
+	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var (
 	tpl *template.Template
 	auth =session.NewSessionManager()
+	client             *mongo.Client
+	err                error
 )
 
 func init() {
@@ -39,6 +47,7 @@ func LoadPage(file string) (*Page, error) {
 	}
 	return &Page{Body: body}, nil
 }
+
 func RenderTemplate(w http.ResponseWriter, file string, page *Page) {
 	err := tpl.ExecuteTemplate(w, file, page)
 	if err != nil {
@@ -70,6 +79,18 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	RenderTemplate(w, file, page)
 }
 
+func IndexHandler(w http.ResponseWriter, r *http.Request) {
+	file := "index.html"
+	filePath := "templates/" + file
+	pageName := "Home Page"
+	page, err := LoadPage(filePath)
+	if err != nil {
+		page = &Page{Title: pageName}
+	}
+	page.Title = pageName
+	RenderTemplate(w, file, page)
+}
+
 func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	file := "login.html"
 	filePath := "templates/" + file
@@ -91,15 +112,19 @@ func middleware(next http.Handler) http.Handler {
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 			return
 		}
-		if r.URL.Path != "/login" || r.URL.Path != "/loginPage" {
+		if r.URL.Path == "/login"{
+
+		}else if  r.URL.Path == "/loginPage" {
+			
+		}else{
 			cok, err := r.Cookie(os.Getenv("AuthCookieName"))
 			if err != nil {
-				http.Redirect(w, r, "/login", http.StatusMovedPermanently)
+				http.Redirect(w, r, "/loginPage", http.StatusMovedPermanently)
 				return
 			}
 			_,err=auth.SessionExist(cok.Value)
 			if err!=nil {
-				http.Redirect(w, r, "/login", http.StatusMovedPermanently)
+				http.Redirect(w, r, "/loginPage", http.StatusMovedPermanently)
 				return
 			}
 		}
@@ -108,20 +133,39 @@ func middleware(next http.Handler) http.Handler {
 }
 
 func main() {
-	users := users.NewUsers(auth)
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatal("Error loading the .env file")
+	}
+	client, err = mongo.NewClient(options.Client().ApplyURI(string("mongodb://" + os.Getenv("MONGO_HOST") + ":" + os.Getenv("MONGO_PORT"))))
+	if err != nil {
+		log.Fatal(err)
+	}
+	ctx, _ := context.WithTimeout(context.TODO(), 10*time.Second)
+	err = client.Connect(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Disconnect(ctx)
+	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets"))))
+
+	users := users.NewUsers(auth,client)
 	http.Handle("/users", middleware(http.HandlerFunc(users.ServeHTTP)))
 	http.Handle("/users/", middleware(http.HandlerFunc(users.ServeHTTP)))
 	http.Handle("/login", middleware(http.HandlerFunc(users.ServeHTTP)))
 
-	members := members.NewMembers()
+	members := members.NewMembers(client)
 	http.Handle("/members", middleware(http.HandlerFunc(members.ServeHTTP)))
 	http.Handle("/members/", middleware(http.HandlerFunc(members.ServeHTTP)))
 
-	http.Handle("/memberPage", middleware(http.HandlerFunc(MemberHandler)))
+	http.Handle("/membersPage", middleware(http.HandlerFunc(MemberHandler)))
 	http.Handle("/loginPage", middleware(http.HandlerFunc(LoginHandler)))
-	http.Handle("/messagePage", middleware(http.HandlerFunc(MessageHandler)))
+	http.Handle("/messagesPage", middleware(http.HandlerFunc(MessageHandler)))
+	http.Handle("/index", middleware(http.HandlerFunc(IndexHandler)))
 
-	err := http.ListenAndServe(string(os.Getenv("SERVER")+":"+os.Getenv("SERVER_PORT")), nil)
+	http.Handle("/",http.RedirectHandler("/index",http.StatusSeeOther))
+	
+	err = http.ListenAndServe(string(os.Getenv("SERVER")+":"+os.Getenv("SERVER_PORT")), nil)
 	if err == http.ErrServerClosed {
 		fmt.Println("Backend server closed")
 	} else if err != nil {

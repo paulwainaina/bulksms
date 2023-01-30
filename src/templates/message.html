@@ -1,0 +1,46 @@
+{{template "header"}}
+    <title>{{.Title}}</title>
+{{template "body"}}  
+    <div class="container" style="margin:auto;width:50%;padding:20px">
+        <form >
+            <div class="mb-3">                
+                {{range $i:=.Data}}
+                <label for="number" class="option">{{$i.PhoneNumber}}</label> 
+                <input type="checkbox" class="checkbox" data-id="{{$i.ID}}"><br>
+                {{end}}
+            </div>
+            <div class="mb-3">
+                <label for="message" class="form-label">Message</label>
+                <textarea type="text" class="form-control" id="message" row="3" required></textarea>
+            </div>
+            <div class="mb-3">
+                <button type="button" onClick='message()' class="btn btn-primary">Message</button>
+            </div>
+           
+        </form> 
+        <div id="errorDiv"></div>
+    </div>
+{{template "footer"}}
+<script>
+    function login(){            
+        let y=document.getElementById('errorDiv')
+        let data=JSON.stringify({"Number":document.getElementById("number").value,"Message":document.getElementById("message").value})
+        fetch('http://127.0.0.1:8080/message',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
+            (result)=>{                    
+                if (!result.ok){                    
+                    throw new Error(result.statusText);
+                }
+                return result.json();
+            }
+        ).then(
+            (data)=>{       
+              
+            }
+        ).catch((e)=>{
+            y.className="alter alter-danger"
+            y.innerText=e
+            y.role="alert"
+        })            
+        setTimeout(()=>{ y.innerText=""},5000)
+    }        
+</script>

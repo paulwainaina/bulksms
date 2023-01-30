@@ -1,0 +1,194 @@
+{{template "header"}}
+    <title>{{.Title}}</title>
+{{template "body"}} 
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-7">
+            <div class="row row-cols-1 row-cols-md-6 g-4">
+                {{range $i:=.Data}} 
+                <div class="col">
+                    <div class="card">
+                        <img class="card-img-top" src={{$i.Passport}}>
+                        <div class="card-body">
+                            <h5 class="card-title">{{$i.ID}} : {{$i.Name}}</h5>
+                            <p class="card-text">Gender: {{$i.Gender}}</p>
+                            <p class="card-text">Date of Birth: {{$i.DateofBirth}}</p>
+                            <p class="card-text">Phone Number: {{$i.PhoneNumber}}</p>
+                        </div>
+                    </div>
+                </div>  
+                {{end}}
+            </div>
+        </div>        
+        <div class="col-5">
+            <div class="card" style="width: 18rem;">              
+                <div class="card-body">
+                    <h5 class="card-title">Member Management</h5>
+                    <form> 
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="mid">Member ID</label>
+                            </div>
+                            <div class="col-md-4">                                
+                                <input type="number" class="form-control" min="0" id="mid" >
+                            </div>
+                            <div class="col-md-2">                                            
+                                <button type="button" onClick='searchmember()' class="btn btn-info">Search</button>
+                            </div> 
+                        </div>
+                        <br>
+                        <div class="form-group">
+                            <label for="mn">Name</label>
+                            <input type="text" class="form-control" id="mn"  required>
+                        </div>
+                        <div class="form-group">
+                            <label for="mg">Gender</label>
+                            <select type="text" class="form-control" id="mg" required >
+                                <option value="m">Male</option>
+                                <option value="f">Female</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="md">Date of Birth</label>
+                            <input type="date" class="form-control" id="md" required >
+                        </div>
+                        <div class="form-group">
+                            <label for="mpn">Phone Number</label>
+                            <input type="tel" class="form-control" id="mpn" pattern="[0-9]{10}" required >
+                        </div>
+                        <br>
+                        <div class="row g-3">
+                            <div class="col-md-4">               
+                                <button type="button" onClick='addmember()' class="btn btn-primary">Add</button>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" onClick='updatemember()' class="btn btn-secondary">Update</button>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" onClick='deletemember()' class="btn btn-danger">Delete</button>
+                            </div>
+                        </div>                   
+                    </form>
+                  </div>
+            </div>
+            <div id="errorDiv">
+
+            </div>
+        </div>
+    </div>
+ </div>
+{{template "footer"}}
+<script>
+    let y=document.getElementById('errorDiv')
+    let id=document.getElementById('mid')
+    let name=document.getElementById('mn')
+    let date=document.getElementById('md')
+    let gender=document.getElementById('mg')
+    let number=document.getElementById('mpn')
+    function addmember(){ 
+        let data=JSON.stringify({"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value})
+        fetch('http://127.0.0.1:8080/members',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
+            (result)=>{                    
+                if (!result.ok){                    
+                    throw new Error(result.statusText);
+                }
+                return result.json();
+            }
+        ).then(
+            (d)=>{       
+                y.className="alter alter-success"
+                y.value="Member added "
+                y.role="alert"
+                id.value=d["ID"] 
+                name.value=d["Name"] 
+                date.value=d["DateofBirth"]  
+                gender.value=d["Gender"]  
+                number.value=d["PhoneNumber"]                  
+            }
+        ).catch((e)=>{
+            y.className="alter alter-danger"
+            y.innerText=e
+            y.role="alert"
+        })            
+        setTimeout(()=>{ y.innerText=""},5000)
+    }  
+    function  searchmember(){
+        fetch('http://127.0.0.1:8080/members/'+id.value,{ method:'GET',headers:{'Content-Type':'application/json'},credentials:"include"}).then(
+            (result)=>{                    
+                if (!result.ok){                    
+                    throw new Error(result.statusText);
+                }
+                return result.json();
+            }
+        ).then(
+            (d)=>{       
+                y.className="alter alter-success"
+                y.value="Member found "
+                y.role="alert" 
+                id.value=d["ID"] 
+                name.value=d["Name"] 
+                date.value=d["DateofBirth"]  
+                gender.value=d["Gender"]  
+                number.value=d["PhoneNumber"]               
+            }
+        ).catch((e)=>{
+            y.className="alter alter-danger"
+            y.innerText=e
+            y.role="alert"
+        })            
+        setTimeout(()=>{ y.innerText=""},5000)
+    }  
+    function  deletemember(){
+        fetch('http://127.0.0.1:8080/members/'+id.value,{ method:'DELETE',headers:{'Content-Type':'application/json'},credentials:"include"}).then(
+            (result)=>{                    
+                if (!result.ok){                    
+                    throw new Error(result.statusText);
+                }
+                return result.json();
+            }
+        ).then(
+            (d)=>{       
+                y.className="alter alter-success"
+                y.value="Member Deleted "
+                y.role="alert" 
+                id.value=d["ID"] 
+                name.value=d["Name"] 
+                date.value=d["DateofBirth"]  
+                gender.value=d["Gender"]  
+                number.value=d["PhoneNumber"]                                
+            }
+        ).catch((e)=>{
+            y.className="alter alter-danger"
+            y.innerText=e
+            y.role="alert"
+        })            
+        setTimeout(()=>{ y.innerText=""},5000)
+    }  
+    function  updatemember(){
+        let data=JSON.stringify({"ID":id.value,"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value})
+        fetch('http://127.0.0.1:8080/members',{ method:'PUT',headers:{'Content-Type':'application/json'},credentials:"include",body:data}).then(
+            (result)=>{                    
+                if (!result.ok){                    
+                    throw new Error(result.statusText);
+                }
+                return result.json();
+            }
+        ).then(
+            (d)=>{      
+                y.className="alter alter-success"
+                y.value="Member updated"
+                y.role="alert" 
+                id.value=d["ID"] 
+                name.value=d["Name"] 
+                date.value=d["DateofBirth"]  
+                gender.value=d["Gender"]  
+                number.value=d["PhoneNumber"]                               
+            }
+        ).catch((e)=>{
+            y.className="alter alter-danger"
+            y.innerText=e
+            y.role="alert"
+        })            
+        setTimeout(()=>{ y.innerText=""},5000)
+    }     
+</script>

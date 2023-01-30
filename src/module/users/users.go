@@ -1,8 +1,10 @@
 package users
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -12,6 +14,8 @@ import (
 	"time"
 
 	"example.com/session"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -65,10 +69,60 @@ type Users struct {
 	systemUsers []*User
 	pattern     *regexp.Regexp
 	authSession *session.SessionManager
+	db          *mongo.Client
 }
 
-func NewUsers(auth *session.SessionManager) *Users {
-	return &Users{systemUsers: make([]*User, 0), pattern: regexp.MustCompile(`^/users/(\d+)/?`), authSession: auth}
+var (
+	userCollection = "user"
+)
+func HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes), err
+}
+
+func CheckPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
+}
+func NewUsers(auth *session.SessionManager, client *mongo.Client) *Users {
+	db:=client.Database(os.Getenv("DB"))
+	users := make([]*User, 0)
+	names,err := db.ListCollectionNames(context.TODO(),bson.D{})
+	if err != nil {
+		fmt.Println(err)
+		log.Fatal("Error loading users")
+		
+	}
+	exists :=false
+	for _,name:=range names{
+		if name==userCollection{
+			exists=true
+		}
+	}	
+	if !exists{
+		db.CreateCollection(context.TODO(),userCollection)	
+		h,_:=HashPassword(os.Getenv("DefaultPassword"))	
+		user:=User{Email:os.Getenv("DefaultEmail"),Password:h}
+		col:= db.Collection(userCollection)
+		_,err:=col.InsertOne(context.TODO(),user)
+		if err != nil {
+			log.Fatal("Error initializing users")
+		}else{
+			users = append(users, &user)
+		}
+	}else{
+		col:= db.Collection(userCollection)
+		result, err := col.Find(context.TODO(), bson.M{})
+		
+		if err != nil {
+			log.Fatal(err.Error())
+		} else {
+			if err = result.All(context.TODO(), &users); err != nil {
+				fmt.Println("Error parsing purchases data " + err.Error())
+			}
+		}
+	}
+	return &Users{systemUsers: users, pattern: regexp.MustCompile(`^/users/(\d+)/?`), authSession: auth, db: client}
 }
 
 func (users *Users) GenerateNewID() uint64 {
@@ -103,8 +157,13 @@ func (users *Users) AddUser(usr User) (*User, error) {
 		}
 	}
 	usr.ID = users.GenerateNewID()
-	h, _ := bcrypt.GenerateFromPassword([]byte(usr.Password),14)
-	usr.Password = string(h)
+	h, _ := HashPassword(usr.Password)
+	usr.Password = h
+	col := *users.db.Database(os.Getenv("DB")).Collection(userCollection)
+	_, err := col.InsertOne(context.TODO(), usr)
+	if err != nil {
+		return &User{}, err
+	}
 	users.systemUsers = append(users.systemUsers, &usr)
 	return &usr, nil
 }
@@ -130,6 +189,11 @@ func (users *Users) GetUserByEmail(email string) (*User, error) {
 func (users *Users) DeleteUserByID(id uint64) (*User, error) {
 	for i, m := range users.systemUsers {
 		if m.ID == id {
+			col := *users.db.Database(os.Getenv("DB")).Collection(userCollection)
+			_, err := col.DeleteOne(context.TODO(),  bson.M{"ID": id})
+			if err != nil {
+				return &User{}, err
+			}
 			users.systemUsers = append(users.systemUsers[:i], users.systemUsers[i+1:]...)
 			return m, nil
 		}
@@ -140,6 +204,14 @@ func (users *Users) DeleteUserByID(id uint64) (*User, error) {
 func (users *Users) UpdateUser(usr User) (*User, error) {
 	for _, m := range users.systemUsers {
 		if m.ID == usr.ID {
+			col := users.db.Database(os.Getenv("DB")).Collection(userCollection)
+			_, err := col.UpdateOne(context.TODO(), bson.M{"ID": usr.ID},
+				bson.M{"$set": bson.M{
+					"Name":     usr.Name,
+					"Email":    usr.Email}})
+			if err != nil {
+				return &User{}, err
+			}
 			m = &usr
 			return m, nil
 		}
@@ -150,8 +222,7 @@ func (users *Users) UpdateUser(usr User) (*User, error) {
 func (users *Users) LoginUser(usr User) (*User, error) {
 	for _, m := range users.systemUsers {
 		if m.Email == usr.Email {
-			err := bcrypt.CompareHashAndPassword([]byte(m.Email), []byte(usr.Password))
-			if err != nil {
+			if CheckPasswordHash(usr.Password,m.Password) {
 				return &User{}, fmt.Errorf("wrong credentials")
 			}
 			return m, nil
