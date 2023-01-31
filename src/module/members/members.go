@@ -11,10 +11,11 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/paulwainaina/timeformater"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"github.com/paulwainaina/timeformater"
 )
 
 type Member struct {
@@ -25,6 +26,22 @@ type Member struct {
 	Passport    string `bson:"Passport"`
 	Deceased    bool   `bson:"Deceased"`
 	PhoneNumber string `bson:"PhoneNumber"`
+}
+
+func (member *Member) Marshal(v interface{}) ([]byte, error) {
+	t, err := time.Parse(time.RFC3339, member.DateofBirth)
+	if err != nil {
+		return []byte{}, err
+	}
+	memb, err := json.Marshal(Member{
+		ID:          member.ID,
+		Name:        member.Name,
+		Gender:      member.Gender,
+		Deceased:    member.Deceased,
+		PhoneNumber: member.PhoneNumber,
+		DateofBirth: string(strconv.Itoa(t.Year()) + "-" + strconv.Itoa(int(t.Month())) + "-" + strconv.Itoa(t.Day())),
+	})
+	return memb, nil
 }
 
 func (member *Member) UnmarshalJSON(data []byte) error {
@@ -65,12 +82,13 @@ func (member *Member) UnmarshalJSON(data []byte) error {
 				member.PhoneNumber = string(v.(string))
 			}
 		case "dateofbirth":
-			{	tf:=timeformater.NewTimeFormater()
-				t,er:=tf.ConvertDateToTime(v.(string),"-")
-				if er!=nil{
+			{
+				tf := timeformater.NewTimeFormater()
+				t, er := tf.ConvertDateToTime(v.(string), "-")
+				if er != nil {
 					return er
-				}				
-				member.DateofBirth=t.String()
+				}
+				member.DateofBirth = t.String()
 			}
 		}
 	}
@@ -80,24 +98,26 @@ func (member *Member) UnmarshalJSON(data []byte) error {
 type Members struct {
 	TargetMembers []*Member
 	pattern       *regexp.Regexp
-	db          *mongo.Client
+	db            *mongo.Client
 }
+
 var (
 	memberCollection = "member"
 )
-func NewMembers( client *mongo.Client) *Members {
-	db:=client.Database(os.Getenv("DB"))
-	col:= db.Collection(memberCollection)
+
+func NewMembers(client *mongo.Client) *Members {
+	db := client.Database(os.Getenv("DB"))
+	col := db.Collection(memberCollection)
 	result, err := col.Find(context.TODO(), bson.M{})
-	mem:=make([]*Member, 0)
+	mem := make([]*Member, 0)
 	if err != nil {
 		log.Fatal("Error loading members")
 	} else {
 		if err = result.All(context.TODO(), &mem); err != nil {
 			fmt.Println("Error parsing purchases data " + err.Error())
 		}
-	}	
-	return &Members{TargetMembers: mem, pattern: regexp.MustCompile(`^/members/(\d+)/?`),db:client}
+	}
+	return &Members{TargetMembers: mem, pattern: regexp.MustCompile(`^/members/(\d+)/?`), db: client}
 }
 
 func (members *Members) GenerateNewID() uint64 {
@@ -133,7 +153,7 @@ func (members *Members) AddMember(memb Member) (*Member, error) {
 	}
 	memb.ID = members.GenerateNewID()
 	col := *members.db.Database(os.Getenv("DB")).Collection(memberCollection)
-	_, err := col.InsertOne(context.TODO(),memb)
+	_, err := col.InsertOne(context.TODO(), memb)
 	if err != nil {
 		return &Member{}, err
 	}
@@ -163,7 +183,7 @@ func (members *Members) DeleteMemberByID(id uint64) (*Member, error) {
 	for i, m := range members.TargetMembers {
 		if m.ID == id {
 			col := *members.db.Database(os.Getenv("DB")).Collection(memberCollection)
-			_, err := col.DeleteOne(context.TODO(),  bson.M{"ID": id})
+			_, err := col.DeleteOne(context.TODO(), bson.M{"ID": id})
 			if err != nil {
 				return &Member{}, err
 			}
@@ -180,10 +200,10 @@ func (members *Members) UpdateMember(memb Member) (*Member, error) {
 			col := members.db.Database(os.Getenv("DB")).Collection(memberCollection)
 			_, err := col.UpdateOne(context.TODO(), bson.M{"ID": m.ID},
 				bson.M{"$set": bson.M{
-					"Name":     memb.Name,
-					"DateofBirth":    memb.DateofBirth,
+					"Name":        memb.Name,
+					"DateofBirth": memb.DateofBirth,
 					"Deceased":    memb.Deceased,
-					"Gender":    memb.Gender}})
+					"Gender":      memb.Gender}})
 			if err != nil {
 				return &Member{}, err
 			}

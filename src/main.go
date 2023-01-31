@@ -22,6 +22,7 @@ var (
 	auth =session.NewSessionManager()
 	client             *mongo.Client
 	err                error
+	memb *members.Members
 )
 
 func init() {
@@ -64,6 +65,7 @@ func MemberHandler(w http.ResponseWriter, r *http.Request) {
 		page = &Page{Title: pageName}
 	}
 	page.Title = pageName
+	page.Data=memb.TargetMembers
 	RenderTemplate(w, file, page)
 }
 
@@ -154,9 +156,9 @@ func main() {
 	http.Handle("/users/", middleware(http.HandlerFunc(users.ServeHTTP)))
 	http.Handle("/login", middleware(http.HandlerFunc(users.ServeHTTP)))
 
-	members := members.NewMembers(client)
-	http.Handle("/members", middleware(http.HandlerFunc(members.ServeHTTP)))
-	http.Handle("/members/", middleware(http.HandlerFunc(members.ServeHTTP)))
+	memb = members.NewMembers(client)
+	http.Handle("/members", middleware(http.HandlerFunc(memb.ServeHTTP)))
+	http.Handle("/members/", middleware(http.HandlerFunc(memb.ServeHTTP)))
 
 	http.Handle("/membersPage", middleware(http.HandlerFunc(MemberHandler)))
 	http.Handle("/loginPage", middleware(http.HandlerFunc(LoginHandler)))
