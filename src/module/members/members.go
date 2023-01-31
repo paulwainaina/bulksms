@@ -11,10 +11,10 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"github.com/paulwainaina/timeformater"
 )
 
 type Member struct {
@@ -65,12 +65,12 @@ func (member *Member) UnmarshalJSON(data []byte) error {
 				member.PhoneNumber = string(v.(string))
 			}
 		case "dateofbirth":
-			{
-				t, err := time.Parse(time.RFC3339, string(v.(string)))
-				if err != nil {
-					return err
-				}
-				member.DateofBirth = t.String()
+			{	tf:=timeformater.NewTimeFormater()
+				t,er:=tf.ConvertDateToTime(v.(string),"-")
+				if er!=nil{
+					return er
+				}				
+				member.DateofBirth=t.String()
 			}
 		}
 	}
@@ -213,12 +213,14 @@ func (members *Members) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				var member Member
 				err := json.NewDecoder(r.Body).Decode(&member)
 				if err != nil {
+					fmt.Println(err)
 					w.WriteHeader(http.StatusInternalServerError)
 					w.Write([]byte(err.Error()))
 					return
 				}
 				v, err := members.AddMember(member)
 				if err != nil {
+					fmt.Println(err)
 					w.WriteHeader(http.StatusInternalServerError)
 					w.Write([]byte(err.Error()))
 					return
