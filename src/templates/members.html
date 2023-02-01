@@ -3,17 +3,19 @@
 {{template "body"}} 
 <div class="container-fluid">
     <div class="row">
-        <div class="col-7">
-            <div class="row row-cols-1 row-cols-md-3 g-4">
+        <div class="col-9">
+            <div class="row row-cols-1 row-cols-md-5 g-4">
                 {{range $i:=.Data}} 
                 <div class="col">
                     <div class="card">
                         <img class="card-img-top" src={{$i.Passport}}>
                         <div class="card-body">
                             <h5 class="card-title">{{$i.ID}} : {{$i.Name}}</h5>
-                            <p class="card-text">
+                            <p class="card-body">
                                 Gender: {{$i.Gender}}
+                                <br>
                                 Date of Birth: {{$i.DateofBirth}}
+                                <br>
                                 Phone Number: {{$i.PhoneNumber}}
                             </p>
                         </div>
@@ -22,11 +24,11 @@
                 {{end}}
             </div>
         </div>        
-        <div class="col-5">
+        <div class="col-3">
             <div class="card" style="width: 18rem;">              
                 <div class="card-body">
                     <h5 class="card-title">Member Management</h5>
-                    <form> 
+                    <form id="memberform"> 
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label for="mid">Member ID</label>
@@ -45,9 +47,10 @@
                         </div>
                         <div class="form-group">
                             <label for="mg">Gender</label>
-                            <select type="text" class="form-control" id="mg" required >
-                                <option value="m">Male</option>
-                                <option value="f">Female</option>
+                            <select type="text" class="form-select" id="mg" required >
+                                <option selected>Open this select menu</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -61,7 +64,7 @@
                         <br>
                         <div class="row g-3">
                             <div class="col-md-4">               
-                                <button type="button" onClick='addmember()' class="btn btn-primary">Add</button>
+                                <button type="button" onClick='addmember()' class="btn btn-primary" disabled="!validForm()">Add</button>
                             </div>
                             <div class="col-md-4">
                                 <button type="button" onClick='updatemember()' class="btn btn-secondary">Update</button>
@@ -87,6 +90,11 @@
     let date=document.getElementById('md')
     let gender=document.getElementById('mg')
     let number=document.getElementById('mpn')
+    
+    function validForm(){
+        let form=document.getElementById('memberform')
+        return form.validity.valid
+    }
     function addmember(){ 
         let data=JSON.stringify({"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value,"Passport":"/assets/images/default_image.png"})
         fetch('http://127.0.0.1:8080/members',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(

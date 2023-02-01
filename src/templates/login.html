@@ -2,25 +2,35 @@
     <title>{{.Title}}</title>
 {{template "body"}}  
     <div class="container" style="margin:auto;width:50%;padding:20px">
-        <form >
+        <form  onsubmit="return login()"class="needs-validation" id="loginform" novalidate>
             <div class="mb-3">
                 <label for="useremail" class="form-label">Email address</label>
-                <input type="email" class="form-control" id="useremail" placeholder="name@example.com" required>
+                <input type="email" class="form-control" id="useremail"  required>
+                <div class="invalid-feedback">
+                    Please provide a valid email
+                </div>             
             </div>
             <div class="mb-3">
-                <label for="userpassword" class="form-label">Password</label>
-                <input type="password" class="form-control" id="userpassword" placeholder="password" required>
+                <label class="form-label" for="userpassword" >Password</label>
+                <input type="password" class="form-control" id="userpassword" required>
+                <div class="invalid-feedback">
+                    Please provide a password
+                </div>
             </div>
             <div class="mb-3">
-                <button type="button" onClick='login()' class="btn btn-primary">Login</button>
+                <button  class="btn btn-primary" type="submit"  >Login</button>
             </div>
            
         </form> 
         <div id="errorDiv"></div>
     </div>
 {{template "footer"}}
-    <script>
-        function login(){            
+    <script> 
+        function login(){    
+            var form=document.getElementById("loginform") 
+            event.preventDefault()
+            form.classList.add('was-validated') 
+            if (form.checkValidity()){
             let y=document.getElementById('errorDiv')
             let data=JSON.stringify({"Email":document.getElementById("useremail").value,"Password":document.getElementById("userpassword").value})
             fetch('http://127.0.0.1:8080/login',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
@@ -31,7 +41,8 @@
                     return result.json();
                 }
             ).then(
-                (data)=>{       
+                (data)=>{
+                    console.log(data)       
                     if (!Object.keys(data).length){
                         y.className="alter alter-warning"
                         y.innerHTML="Incorrect credentials"
@@ -49,5 +60,6 @@
                 y.role="alert"
             })            
             setTimeout(()=>{ y.innerText=""},5000)
+            }
         }        
     </script>
