@@ -107,6 +107,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 
 func middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control","no-cache")
 		if r.Method == "OPTIONS" {
 			w.Header().Set("Access-Control-Allow-Origin", "http://"+string(os.Getenv("SERVER")+":"+os.Getenv("SERVER_PORT")))
 			w.Header().Set("Access-Control-Allow-Methods", "POST,GET,PUT,DELETE")
@@ -119,6 +120,7 @@ func middleware(next http.Handler) http.Handler {
 		}else if  r.URL.Path == "/loginPage" {
 			
 		}else{
+			fmt.Println(r.Cookies())
 			cok, err := r.Cookie(os.Getenv("AuthCookieName"))
 			if err != nil {
 				http.Redirect(w, r, "/loginPage", http.StatusMovedPermanently)

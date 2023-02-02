@@ -28,7 +28,7 @@
             <div class="card" style="width: 18rem;">              
                 <div class="card-body">
                     <h5 class="card-title">Member Management</h5>
-                    <form id="memberform"> 
+                    <form class="needs-validation" id="memberform" novalidate> 
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label for="mid">Member ID</label>
@@ -37,7 +37,7 @@
                                 <input type="number" class="form-control" min="0" id="mid" >
                             </div>
                             <div class="col-md-2">                                            
-                                <button type="button" onClick='searchmember()' class="btn btn-info">Search</button>
+                                <button type="submit"  onsubmit='return searchmember()' class="btn btn-info">Search</button>
                             </div> 
                         </div>
                         <br>
@@ -64,13 +64,13 @@
                         <br>
                         <div class="row g-3">
                             <div class="col-md-4">               
-                                <button type="button" onClick='addmember()' class="btn btn-primary" disabled="!validForm()">Add</button>
+                                <button type="submit"  onsubmit='return addmember()' class="btn btn-primary" >Add</button>
                             </div>
                             <div class="col-md-4">
-                                <button type="button" onClick='updatemember()' class="btn btn-secondary">Update</button>
+                                <button type="submit"  onsubmit='return updatemember()' class="btn btn-secondary">Update</button>
                             </div>
                             <div class="col-md-4">
-                                <button type="button" onClick='deletemember()' class="btn btn-danger">Delete</button>
+                                <button type="submit" onsubmit='return deletemember()' class="btn btn-danger">Delete</button>
                             </div>
                         </div>                   
                     </form>
@@ -93,112 +93,122 @@
     
     function validForm(){
         let form=document.getElementById('memberform')
-        return form.validity.valid
+        event.preventDefault()
+        form.classList.add('was-validated') 
+        return form.checkValidity()
     }
     function addmember(){ 
-        let data=JSON.stringify({"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value,"Passport":"/assets/images/default_image.png"})
-        fetch('http://127.0.0.1:8080/members',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
-            (result)=>{                    
-                if (!result.ok){                    
-                    throw new Error(result.statusText);
+        if (validForm()){
+            let data=JSON.stringify({"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value,"Passport":"/assets/images/default_image.png"})
+            fetch('http://127.0.0.1:8080/members',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
+                (result)=>{                    
+                    if (!result.ok){                    
+                        throw new Error(result.statusText);
+                    }
+                    return result.json();
                 }
-                return result.json();
-            }
-        ).then(
-            (d)=>{       
-                y.className="alter alter-success"
-                y.value="Member added "
+            ).then(
+                (d)=>{       
+                    y.className="alter alter-success"
+                    y.value="Member added "
+                    y.role="alert"
+                    id.value=d["ID"] 
+                    name.value=d["Name"] 
+                    date.value=d["DateofBirth"]  
+                    gender.value=d["Gender"]  
+                    number.value=d["PhoneNumber"]                  
+                }
+            ).catch((e)=>{
+                y.className="alter alter-danger"
+                y.innerText=e
                 y.role="alert"
-                id.value=d["ID"] 
-                name.value=d["Name"] 
-                date.value=d["DateofBirth"]  
-                gender.value=d["Gender"]  
-                number.value=d["PhoneNumber"]                  
-            }
-        ).catch((e)=>{
-            y.className="alter alter-danger"
-            y.innerText=e
-            y.role="alert"
-        })            
-        setTimeout(()=>{ y.innerText=""},5000)
+            })            
+            setTimeout(()=>{ y.innerText=""},5000)
+        }
     }  
     function  searchmember(){
-        fetch('http://127.0.0.1:8080/members/'+id.value,{ method:'GET',headers:{'Content-Type':'application/json'},credentials:"include"}).then(
-            (result)=>{                    
-                if (!result.ok){                    
-                    throw new Error(result.statusText);
+        if (validForm()){
+            fetch('http://127.0.0.1:8080/members/'+id.value,{ method:'GET',headers:{'Content-Type':'application/json'},credentials:"include"}).then(
+                (result)=>{                    
+                    if (!result.ok){                    
+                        throw new Error(result.statusText);
+                    }
+                    return result.json();
                 }
-                return result.json();
-            }
-        ).then(
-            (d)=>{       
-                y.className="alter alter-success"
-                y.value="Member found "
-                y.role="alert" 
-                id.value=d["ID"] 
-                name.value=d["Name"] 
-                date.value=d["DateofBirth"]  
-                gender.value=d["Gender"]  
-                number.value=d["PhoneNumber"]               
-            }
-        ).catch((e)=>{
-            y.className="alter alter-danger"
-            y.innerText=e
-            y.role="alert"
-        })            
-        setTimeout(()=>{ y.innerText=""},5000)
+            ).then(
+                (d)=>{       
+                    y.className="alter alter-success"
+                    y.value="Member found "
+                    y.role="alert" 
+                    id.value=d["ID"] 
+                    name.value=d["Name"] 
+                    date.value=d["DateofBirth"]  
+                    gender.value=d["Gender"]  
+                    number.value=d["PhoneNumber"]               
+                }
+            ).catch((e)=>{
+                y.className="alter alter-danger"
+                y.innerText=e
+                y.role="alert"
+            })            
+            setTimeout(()=>{ y.innerText=""},5000)
+        }
     }  
     function  deletemember(){
-        fetch('http://127.0.0.1:8080/members/'+id.value,{ method:'DELETE',headers:{'Content-Type':'application/json'},credentials:"include"}).then(
-            (result)=>{                    
-                if (!result.ok){                    
-                    throw new Error(result.statusText);
+        if (validForm()){
+            fetch('http://127.0.0.1:8080/members/'+id.value,{ method:'DELETE',headers:{'Content-Type':'application/json'},credentials:"include"}).then(
+                (result)=>{                    
+                    if (!result.ok){                    
+                        throw new Error(result.statusText);
+                    }
+                    return result.json();
                 }
-                return result.json();
-            }
-        ).then(
-            (d)=>{       
-                y.className="alter alter-success"
-                y.value="Member Deleted "
-                y.role="alert" 
-                id.value=d["ID"] 
-                name.value=d["Name"] 
-                date.value=d["DateofBirth"]  
-                gender.value=d["Gender"]  
-                number.value=d["PhoneNumber"]                                
-            }
-        ).catch((e)=>{
-            y.className="alter alter-danger"
-            y.innerText=e
-            y.role="alert"
-        })            
-        setTimeout(()=>{ y.innerText=""},5000)
+            ).then(
+                (d)=>{       
+                    y.className="alter alter-success"
+                    y.value="Member Deleted "
+                    y.role="alert" 
+                    id.value=d["ID"] 
+                    name.value=d["Name"] 
+                    date.value=d["DateofBirth"]  
+                    gender.value=d["Gender"]  
+                    number.value=d["PhoneNumber"]                                
+                }
+            ).catch((e)=>{
+                y.className="alter alter-danger"
+                y.innerText=e
+                y.role="alert"
+            })            
+            setTimeout(()=>{ y.innerText=""},5000)
+        }
     }  
     function  updatemember(){
-        let data=JSON.stringify({"ID":id.value,"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value})
-        fetch('http://127.0.0.1:8080/members',{ method:'PUT',headers:{'Content-Type':'application/json'},credentials:"include",body:data}).then(
-            (result)=>{                    
-                if (!result.ok){                    
-                    throw new Error(result.statusText);
+        if (validForm()){
+            let data=JSON.stringify({"ID":id.value,"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value})
+            fetch('http://127.0.0.1:8080/members',{ method:'PUT',headers:{'Content-Type':'application/json'},credentials:"include",body:data}).then(
+                (result)=>{                    
+                    if (!result.ok){                    
+                        throw new Error(result.statusText);
+                    }
+                    return result.json();
                 }
-                return result.json();
-            }
-        ).then(
-            (d)=>{      
-                y.className="alter alter-success"
-                y.value="Member updated"
-                y.role="alert" 
-                id.value=d["ID"] 
-                name.value=d["Name"] 
-                date.value=d["DateofBirth"]  
-                gender.value=d["Gender"]  
-                number.value=d["PhoneNumber"]                               
-            }
-        ).catch((e)=>{
-            y.className="alter alter-danger"
-            y.innerText=e
-            y.role="alert"
-        })            
-        setTimeout(()=>{ y.innerText=""},5000)
+            ).then(
+                (d)=>{      
+                    y.className="alter alter-success"
+                    y.value="Member updated"
+                    y.role="alert" 
+                    id.value=d["ID"] 
+                    name.value=d["Name"] 
+                    date.value=d["DateofBirth"]  
+                    gender.value=d["Gender"]  
+                    number.value=d["PhoneNumber"]                               
+                }
+            ).catch((e)=>{
+                y.className="alter alter-danger"
+                y.innerText=e
+                y.role="alert"
+            })            
+            setTimeout(()=>{ y.innerText=""},5000)
+        }
     }     
 </script>

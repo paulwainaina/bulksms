@@ -22,7 +22,7 @@
             </div>
            
         </form> 
-        <div id="errorDiv"></div>
+        <div id="errorDiv" class="alter "></div>
     </div>
 {{template "footer"}}
     <script> 
@@ -31,35 +31,32 @@
             event.preventDefault()
             form.classList.add('was-validated') 
             if (form.checkValidity()){
-            let y=document.getElementById('errorDiv')
-            let data=JSON.stringify({"Email":document.getElementById("useremail").value,"Password":document.getElementById("userpassword").value})
-            fetch('http://127.0.0.1:8080/login',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
-                (result)=>{                    
-                    if (!result.ok){                    
-                        throw new Error(result.statusText);
+                let y=document.getElementById('errorDiv')
+                let data=JSON.stringify({"Email":document.getElementById("useremail").value,"Password":document.getElementById("userpassword").value})
+                fetch('http://127.0.0.1:8080/login',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
+                    (result)=>{                    
+                        if (!result.ok){                    
+                            throw new Error(result.statusText);
+                        }
+                        return result.json();
                     }
-                    return result.json();
-                }
-            ).then(
-                (data)=>{
-                    console.log(data)       
-                    if (!Object.keys(data).length){
-                        y.className="alter alter-warning"
-                        y.innerHTML="Incorrect credentials"
-                        y.role="alert"
-                    }else{
-                        y.className="alter alter-success"
-                        y.innerHTML="Correct credentials"
-                        y.role="alert"
-                        window.location.href="http://127.0.0.1:8080/index"
+                ).then(
+                    (data)=>{
+                        console.log(data)       
+                        if (!Object.keys(data).length){
+                            y.classList.add("alter-warning")
+                            y.innerHTML="Incorrect credentials"
+                        }else{
+                            y.classList.add("alter-success")
+                            y.innerHTML="Correct credentials"
+                            window.location.assign("http://127.0.0.1:8080/index")
+                        }
                     }
+                ).catch((e)=>{
+                    y.classList.add("alter-danger")
+                    y.innerText=e
+                })            
+                setTimeout(()=>{ y.innerText=""},5000)
                 }
-            ).catch((e)=>{
-                y.className="alter alter-danger"
-                y.innerText=e
-                y.role="alert"
-            })            
-            setTimeout(()=>{ y.innerText=""},5000)
-            }
         }        
     </script>
