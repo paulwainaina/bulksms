@@ -1,62 +1,96 @@
 {{template "header"}}
     <title>{{.Title}}</title>
 {{template "body"}}  
-    <div class="container" style="margin:auto;width:50%;padding:20px">
-        <form  onsubmit="return login()"class="needs-validation" id="loginform" novalidate>
+    <div class="mt-2">
+        <form  onsubmit="login()"class="needs-validation" id="loginform" novalidate style="margin:auto;max-width: 480px;">
+            <div class="text-center">
+            <img class=" mt-4 mb-4" src="/assets/images/favicon.png" height="72"></div>
+            <h1 class="text-center h3 mb-3">Welcome back. Please sign in</h1>
             <div class="mb-3">
-                <label for="useremail" class="form-label">Email address</label>
-                <input type="email" class="form-control" id="useremail"  required>
+                <label for="useremail" class="sr-only" >Email address</label>
+                <input type="email" class="form-control" id="useremail"  required autofocus>
                 <div class="invalid-feedback">
                     Please provide a valid email
                 </div>             
             </div>
             <div class="mb-3">
                 <label class="form-label" for="userpassword" >Password</label>
-                <input type="password" class="form-control" id="userpassword" required>
+                <input type="password" class="form-control" id="userpassword" pattern="(?=^.{8,}$)(?=.*\d)(?=.*[!@#$%^&*]+)(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$" required>
                 <div class="invalid-feedback">
-                    Please provide a password
+                    <ul>
+                        <li>The password length must be greater than or equal to 8</li>
+                        <li>The password must contain one or more uppercase characters</li>
+                        <li>The password must contain one or more lowercase characters</li>
+                        <li>The password must contain one or more numeric values</li>
+                        <li>The password must contain one or more special characters</li>
+                    </ul>
                 </div>
             </div>
             <div class="mb-3">
-                <button  class="btn btn-primary" type="submit"  >Login</button>
+                <input type="checkbox" id="showpassword"> Show Password
             </div>
-           
+            <div class="row g-2"> 
+                <div class="col-sm-3">
+                    <button  class="btn btn-primary" type="submit"  >Login</button>
+                </div> 
+                <div class="col-sm-3">
+                    <a class="btn btn-primary" href="/registerPage" type="button" >Register</a>
+                </div> 
+           </div>
+           <br>
+           <div id="errorDiv" class="alter" role="alter"></div>
         </form> 
-        <div id="errorDiv" class="alter "></div>
+        <div>
+
+        </div>
     </div>
 {{template "footer"}}
     <script> 
-        function login(){    
-            var form=document.getElementById("loginform") 
+        document.getElementById("showpassword").addEventListener("click", function(event){
+            var x = document.getElementById("userpassword");
+            if (x.type === "password") {
+                x.type = "text";
+            } else {
+                x.type = "password";
+            }
+        })
+        var form=document.getElementById("loginform")
+        form.addEventListener("submit", function(event){
             event.preventDefault()
+            event.stopPropagation()
             form.classList.add('was-validated') 
             if (form.checkValidity()){
-                let y=document.getElementById('errorDiv')
-                let data=JSON.stringify({"Email":document.getElementById("useremail").value,"Password":document.getElementById("userpassword").value})
+                var y=document.getElementById('errorDiv')
+                var data=JSON.stringify({"Email":form.useremail.value,"Password":form.userpassword.value})
                 fetch('http://127.0.0.1:8080/login',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
                     (result)=>{                    
                         if (!result.ok){                    
-                            throw new Error(result.statusText);
+                            throw new Error(JSON.stringify(result.body));
                         }
                         return result.json();
                     }
                 ).then(
                     (data)=>{
                         console.log(data)       
-                        if (!Object.keys(data).length){
-                            y.classList.add("alter-warning")
+                        if (Object.keys(data).length===0){                           
+                            y.className+=" alter-warning"
                             y.innerHTML="Incorrect credentials"
+                            form.classList.remove('was-validated') 
                         }else{
-                            y.classList.add("alter-success")
+                            y.className+=" alter-success"
                             y.innerHTML="Correct credentials"
                             window.location.assign("http://127.0.0.1:8080/index")
                         }
                     }
                 ).catch((e)=>{
-                    y.classList.add("alter-danger")
-                    y.innerText=e
+                    y.className+=" alter-danger"
+                    y.innerHTML=e
+                    form.classList.remove('was-validated')
                 })            
-                setTimeout(()=>{ y.innerText=""},5000)
-                }
-        }        
+                setTimeout(()=>{ 
+                    y.className="alter"
+                    y.innerHTML=""
+                },10000)
+            }
+        })       
     </script>

@@ -1,0 +1,94 @@
+{{template "header"}}
+    <title>{{.Title}}</title>
+{{template "body"}}
+<form class="needs-validation" id="rform" novalidate style="margin:auto;max-width: 480px;">
+    <div class="text-center">
+    <img class=" mt-4 mb-4" src="/assets/images/favicon.png" height="72"></div>
+    <h1 class="text-center h3 mb-3">Welcome sign up</h1>
+    <div class="mb-3">
+        <label for="useremail" class="sr-only" >Email address</label>
+        <input type="email" class="form-control" id="useremail"  required autofocus>
+        <div class="invalid-feedback">
+            Please provide a valid email
+        </div>             
+    </div>
+    <div class="mb-3">
+        <label class="form-label" for="userpassword" >Password</label>
+        <input type="password" class="form-control" id="userpassword" pattern="(?=^.{8,}$)(?=.*\d)(?=.*[!@#$%^&*]+)(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$" required>
+        <div class="invalid-feedback">
+            <ul>
+                <li>The password length must be greater than or equal to 8</li>
+                <li>The password must contain one or more uppercase characters</li>
+                <li>The password must contain one or more lowercase characters</li>
+                <li>The password must contain one or more numeric values</li>
+                <li>The password must contain one or more special characters</li>
+            </ul>
+        </div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label" for="cuserpassword" >Confirm Password</label>
+        <input type="password" class="form-control" id="cuserpassword" pattern="(?=^.{8,}$)(?=.*\d)(?=.*[!@#$%^&*]+)(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$" required>
+        <div class="invalid-feedback">
+            <ul>
+                <li>The password length must be greater than or equal to 8</li>
+                <li>The password must contain one or more uppercase characters</li>
+                <li>The password must contain one or more lowercase characters</li>
+                <li>The password must contain one or more numeric values</li>
+                <li>The password must contain one or more special characters</li>
+            </ul>
+        </div>
+    </div>
+    <div class="mb-3">
+        <button  class="btn btn-primary" type="submit"  >Register</button>
+    </div> 
+    <br>
+    <div id="ediv" class="alter "></div>
+</form>
+
+{{template "footer"}}
+<script>
+        var form=document.getElementById("rform")
+        form.addEventListener("submit", function(event){
+            event.preventDefault()
+            event.stopPropagation()
+            form.classList.add('was-validated')    
+            if (form.checkValidity()){
+                if (form.userpassword.value!==form.cuserpassword.value){
+                    y.classList.add(" alter-danger")
+                    y.innerText="Passwords do not match"
+                    form.classList.remove('was-validated')
+                    return
+                }
+                let y=document.getElementById('ediv')
+                let data=JSON.stringify({"Email":form.useremail.value,"Password":form.userpassword.value})
+                fetch('http://127.0.0.1:8080/users',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
+                    (result)=>{                  
+                        if (!result.ok){                    
+                            throw new Error(result.statusText);
+                        }
+                        return result.json();
+                    }
+                ).then(
+                    (data)=>{
+                        if(data.hasOwnProperty('error')){
+                            y.className+=" alter-danger"
+                            y.innerHTML=data['error']
+                            form.classList.remove('was-validated')
+                        }else{
+                            y.classList.add(" alter-success")
+                            y.innerHTML="Correct credentials"
+                            window.location.assign("http://127.0.0.1:8080/index")   
+                        }                     
+                    }
+                ).catch((e)=>{            
+                    y.className+=" alter-danger"
+                    y.innerHTML=e
+                    form.classList.remove('was-validated')
+                })            
+                setTimeout(()=>{ 
+                    y.className="alter"
+                    y.innerHTML=""
+                },10000)
+            }
+        })
+</script>

@@ -75,6 +75,7 @@ type Users struct {
 var (
 	userCollection = "user"
 )
+
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	return string(bytes), err
@@ -85,23 +86,23 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 func NewUsers(auth *session.SessionManager, client *mongo.Client) *Users {
-	db:=client.Database(os.Getenv("DB"))
+	db := client.Database(os.Getenv("DB"))
 	users := make([]*User, 0)
-	names,err := db.ListCollectionNames(context.TODO(),bson.D{})
+	/*names,err := db.ListCollectionNames(context.TODO(),bson.D{})
 	if err != nil {
 		fmt.Println(err)
 		log.Fatal("Error loading users")
-		
+
 	}
 	exists :=false
 	for _,name:=range names{
 		if name==userCollection{
 			exists=true
 		}
-	}	
+	}
 	if !exists{
-		db.CreateCollection(context.TODO(),userCollection)	
-		h,_:=HashPassword(os.Getenv("DefaultPassword"))	
+		db.CreateCollection(context.TODO(),userCollection)
+		h,_:=HashPassword(os.Getenv("DefaultPassword"))
 		user:=User{Email:os.Getenv("DefaultEmail"),Password:h}
 		col:= db.Collection(userCollection)
 		_,err:=col.InsertOne(context.TODO(),user)
@@ -110,18 +111,18 @@ func NewUsers(auth *session.SessionManager, client *mongo.Client) *Users {
 		}else{
 			users = append(users, &user)
 		}
-	}else{
-		col:= db.Collection(userCollection)
-		result, err := col.Find(context.TODO(), bson.M{})
-		
-		if err != nil {
-			log.Fatal(err.Error())
-		} else {
-			if err = result.All(context.TODO(), &users); err != nil {
-				fmt.Println("Error parsing purchases data " + err.Error())
-			}
+	}else{*/
+	col := db.Collection(userCollection)
+	result, err := col.Find(context.TODO(), bson.M{})
+
+	if err != nil {
+		log.Fatal(err.Error())
+	} else {
+		if err = result.All(context.TODO(), &users); err != nil {
+			log.Fatal("Error parsing purchases data " + err.Error())
 		}
 	}
+
 	return &Users{systemUsers: users, pattern: regexp.MustCompile(`^/users/(\d+)/?`), authSession: auth, db: client}
 }
 
@@ -149,11 +150,11 @@ func (users *Users) GenerateNewID() uint64 {
 
 func (users *Users) AddUser(usr User) (*User, error) {
 	if usr.ID != 0 {
-		return &User{}, fmt.Errorf("new user cannot have an id %v ", usr.ID)
+		return &User{}, fmt.Errorf("new user cannot have an id %v", usr.ID)
 	}
 	for _, m := range users.systemUsers {
 		if m.Email == usr.Email {
-			return &User{}, fmt.Errorf("a user with the same number exists %v ", m.Email)
+			return &User{}, fmt.Errorf("a user with the same number exists %v", m.Email)
 		}
 	}
 	usr.ID = users.GenerateNewID()
@@ -174,7 +175,7 @@ func (users *Users) GetUserByID(id uint64) (*User, error) {
 			return m, nil
 		}
 	}
-	return &User{}, fmt.Errorf("user with id %v not found", id)
+	return &User{}, fmt.Errorf("{'error':'user with id %v not found'", id)
 }
 
 func (users *Users) GetUserByEmail(email string) (*User, error) {
@@ -183,16 +184,16 @@ func (users *Users) GetUserByEmail(email string) (*User, error) {
 			return m, nil
 		}
 	}
-	return &User{}, fmt.Errorf("user with phone number %v not found", email)
+	return &User{}, fmt.Errorf("{'error':'user with phone number %v not found'", email)
 }
 
 func (users *Users) DeleteUserByID(id uint64) (*User, error) {
 	for i, m := range users.systemUsers {
 		if m.ID == id {
 			col := *users.db.Database(os.Getenv("DB")).Collection(userCollection)
-			_, err := col.DeleteOne(context.TODO(),  bson.M{"ID": id})
+			_, err := col.DeleteOne(context.TODO(), bson.M{"ID": id})
 			if err != nil {
-				return &User{}, err
+				return &User{}, fmt.Errorf("{'error':'%v'}", err)
 			}
 			users.systemUsers = append(users.systemUsers[:i], users.systemUsers[i+1:]...)
 			return m, nil
@@ -207,10 +208,10 @@ func (users *Users) UpdateUser(usr User) (*User, error) {
 			col := users.db.Database(os.Getenv("DB")).Collection(userCollection)
 			_, err := col.UpdateOne(context.TODO(), bson.M{"ID": usr.ID},
 				bson.M{"$set": bson.M{
-					"Name":     usr.Name,
-					"Email":    usr.Email}})
+					"Name":  usr.Name,
+					"Email": usr.Email}})
 			if err != nil {
-				return &User{}, err
+				return &User{}, fmt.Errorf("{'error':'%v'}", err.Error())
 			}
 			m = &usr
 			return m, nil
@@ -222,7 +223,7 @@ func (users *Users) UpdateUser(usr User) (*User, error) {
 func (users *Users) LoginUser(usr User) (*User, error) {
 	for _, m := range users.systemUsers {
 		if m.Email == usr.Email {
-			if CheckPasswordHash(usr.Password,m.Password) {
+			if !CheckPasswordHash(usr.Password, m.Password) {
 				return &User{}, fmt.Errorf("wrong credentials")
 			}
 			return m, nil
@@ -239,7 +240,7 @@ func (users *Users) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		err := json.NewDecoder(r.Body).Decode(&user)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
+			w.Write([]byte(fmt.Sprintf("'error':'%v'", err.Error())))
 			return
 		}
 		u, err := users.LoginUser(user)
@@ -250,8 +251,7 @@ func (users *Users) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		sess, err := users.authSession.CreateSession(u.Email)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
+			w.Write([]byte(fmt.Sprintf("'error':'%v'", err.Error())))
 			return
 		}
 		http.SetCookie(w, &http.Cookie{
@@ -273,7 +273,7 @@ func (users *Users) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				v, err := json.Marshal(users.systemUsers)
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(err.Error()))
+					w.Write([]byte(fmt.Sprintf("'error':'%v'", err.Error())))
 					return
 				}
 				w.WriteHeader(http.StatusOK)
@@ -284,17 +284,17 @@ func (users *Users) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				var user User
 				err := json.NewDecoder(r.Body).Decode(&user)
 				if err != nil {
+					d:=json
+					json.Unmarshal("{'error':'"+err.Error()+"'}",&d)
 					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(err.Error()))
+					w.Write([]byte(json.)
 					return
 				}
 				v, err := users.AddUser(user)
 				if err != nil {
-					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(err.Error()))
+					w.Write([]byte(fmt.Sprintf("'error':'%v'", err.Error())))
 					return
 				}
-				w.WriteHeader(http.StatusOK)
 				json.NewEncoder(w).Encode(v)
 			}
 		case http.MethodPut:
@@ -303,16 +303,14 @@ func (users *Users) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				err := json.NewDecoder(r.Body).Decode(&user)
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(err.Error()))
+					w.Write([]byte(fmt.Sprintf("'error':'%v'", err.Error())))
 					return
 				}
 				v, err := users.UpdateUser(user)
 				if err != nil {
-					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(err.Error()))
+					w.Write([]byte(fmt.Sprintf("'error':'%v'", err.Error())))
 					return
 				}
-				w.WriteHeader(http.StatusOK)
 				json.NewEncoder(w).Encode(v)
 			}
 		default:
@@ -338,8 +336,7 @@ func (users *Users) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			{
 				product, err := users.GetUserByID(uint64(id))
 				if err != nil {
-					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(err.Error()))
+					w.Write([]byte(fmt.Sprintf("'error':'%v'", err.Error())))
 					return
 				}
 				w.WriteHeader(http.StatusOK)
@@ -349,8 +346,7 @@ func (users *Users) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			{
 				product, err := users.DeleteUserByID(uint64(id))
 				if err != nil {
-					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(err.Error()))
+					w.Write([]byte(fmt.Sprintf("'error':'%v'", err.Error())))
 					return
 				}
 				w.WriteHeader(http.StatusOK)
