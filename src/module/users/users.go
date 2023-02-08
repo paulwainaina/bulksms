@@ -240,18 +240,18 @@ func (users *Users) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		err := json.NewDecoder(r.Body).Decode(&user)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("'error':'%v'", err.Error())))
 			return
 		}
 		u, err := users.LoginUser(user)
 		if err != nil {
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("{}"))
+			res:=struct{Error string}{Error:err.Error()}
+			json.NewEncoder(w).Encode(res)
 			return
 		}
 		sess, err := users.authSession.CreateSession(u.Email)
 		if err != nil {
-			w.Write([]byte(fmt.Sprintf("'error':'%v'", err.Error())))
+			res:=struct{Error string}{Error:err.Error()}
+			json.NewEncoder(w).Encode(res)
 			return
 		}
 		http.SetCookie(w, &http.Cookie{
