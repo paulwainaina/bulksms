@@ -154,7 +154,7 @@ func (users *Users) AddUser(usr User) (*User, error) {
 	}
 	for _, m := range users.systemUsers {
 		if m.Email == usr.Email {
-			return &User{}, fmt.Errorf("a user with the same number exists %v", m.Email)
+			return &User{}, fmt.Errorf("a user with the same email exists %v", m.Email)
 		}
 	}
 	usr.ID = users.GenerateNewID()
@@ -284,15 +284,13 @@ func (users *Users) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				var user User
 				err := json.NewDecoder(r.Body).Decode(&user)
 				if err != nil {
-					d:=json
-					json.Unmarshal("{'error':'"+err.Error()+"'}",&d)
 					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(json.)
 					return
 				}
 				v, err := users.AddUser(user)
 				if err != nil {
-					w.Write([]byte(fmt.Sprintf("'error':'%v'", err.Error())))
+					res:=struct{Error string}{Error:err.Error()}
+					json.NewEncoder(w).Encode(res)
 					return
 				}
 				json.NewEncoder(w).Encode(v)
