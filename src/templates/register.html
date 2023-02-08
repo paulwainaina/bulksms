@@ -69,7 +69,6 @@
                     }
                 ).then(
                     (data)=>{
-                        console.log(data)
                         if(data.hasOwnProperty('Error')){
                             y.classList.add("alter-danger")
                             y.innerHTML=data['Error']
