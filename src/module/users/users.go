@@ -175,7 +175,7 @@ func (users *Users) GetUserByID(id uint64) (*User, error) {
 			return m, nil
 		}
 	}
-	return &User{}, fmt.Errorf("{'error':'user with id %v not found'", id)
+	return &User{}, fmt.Errorf("user with id %v not found", id)
 }
 
 func (users *Users) GetUserByEmail(email string) (*User, error) {
@@ -193,7 +193,7 @@ func (users *Users) DeleteUserByID(id uint64) (*User, error) {
 			col := *users.db.Database(os.Getenv("DB")).Collection(userCollection)
 			_, err := col.DeleteOne(context.TODO(), bson.M{"ID": id})
 			if err != nil {
-				return &User{}, fmt.Errorf("{'error':'%v'}", err)
+				return &User{}, err
 			}
 			users.systemUsers = append(users.systemUsers[:i], users.systemUsers[i+1:]...)
 			return m, nil
@@ -211,7 +211,7 @@ func (users *Users) UpdateUser(usr User) (*User, error) {
 					"Name":  usr.Name,
 					"Email": usr.Email}})
 			if err != nil {
-				return &User{}, fmt.Errorf("{'error':'%v'}", err.Error())
+				return &User{}, err
 			}
 			m = &usr
 			return m, nil
@@ -244,13 +244,13 @@ func (users *Users) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		u, err := users.LoginUser(user)
 		if err != nil {
-			res:=struct{Error string}{Error:err.Error()}
+			res := struct{ Error string }{Error: err.Error()}
 			json.NewEncoder(w).Encode(res)
 			return
 		}
 		sess, err := users.authSession.CreateSession(u.Email)
 		if err != nil {
-			res:=struct{Error string}{Error:err.Error()}
+			res := struct{ Error string }{Error: err.Error()}
 			json.NewEncoder(w).Encode(res)
 			return
 		}
@@ -272,8 +272,8 @@ func (users *Users) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			{
 				v, err := json.Marshal(users.systemUsers)
 				if err != nil {
-					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(fmt.Sprintf("'error':'%v'", err.Error())))
+					res := struct{ Error string }{Error: err.Error()}
+					json.NewEncoder(w).Encode(res)
 					return
 				}
 				w.WriteHeader(http.StatusOK)
@@ -289,7 +289,7 @@ func (users *Users) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 				v, err := users.AddUser(user)
 				if err != nil {
-					res:=struct{Error string}{Error:err.Error()}
+					res := struct{ Error string }{Error: err.Error()}
 					json.NewEncoder(w).Encode(res)
 					return
 				}
@@ -301,12 +301,12 @@ func (users *Users) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				err := json.NewDecoder(r.Body).Decode(&user)
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(fmt.Sprintf("'error':'%v'", err.Error())))
 					return
 				}
 				v, err := users.UpdateUser(user)
 				if err != nil {
-					w.Write([]byte(fmt.Sprintf("'error':'%v'", err.Error())))
+					res := struct{ Error string }{Error: err.Error()}
+					json.NewEncoder(w).Encode(res)
 					return
 				}
 				json.NewEncoder(w).Encode(v)
@@ -334,7 +334,8 @@ func (users *Users) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			{
 				product, err := users.GetUserByID(uint64(id))
 				if err != nil {
-					w.Write([]byte(fmt.Sprintf("'error':'%v'", err.Error())))
+					res := struct{ Error string }{Error: err.Error()}
+					json.NewEncoder(w).Encode(res)
 					return
 				}
 				w.WriteHeader(http.StatusOK)
@@ -344,7 +345,8 @@ func (users *Users) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			{
 				product, err := users.DeleteUserByID(uint64(id))
 				if err != nil {
-					w.Write([]byte(fmt.Sprintf("'error':'%v'", err.Error())))
+					res := struct{ Error string }{Error: err.Error()}
+					json.NewEncoder(w).Encode(res)
 					return
 				}
 				w.WriteHeader(http.StatusOK)

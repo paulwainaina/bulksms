@@ -28,7 +28,7 @@
             <div class="card" style="width: 18rem;">              
                 <div class="card-body">
                     <h5 class="card-title">Member Management</h5>
-                    <form onsubmit="submitForm(event.submitter.value)"class="needs-validation" id="memberform" novalidate> 
+                    <form  onsubmit="submitForm(event.submitter.value)" id="memberform" > 
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label for="mid">Member ID</label>
@@ -37,7 +37,7 @@
                                 <input type="number" class="form-control" min="0" id="mid" >
                             </div>
                             <div class="col-md-2">                                            
-                                <button type="submit" value="search" class="btn btn-info">Search</button>
+                                <button type="submit" value="search" id="search" class="btn btn-info">Search</button>
                             </div> 
                         </div>
                         <br>
@@ -49,8 +49,8 @@
                             <label for="mg">Gender</label>
                             <select type="text" class="form-select" id="mg">
                                 <option selected></option>
-                                <option value="male">Male</option>
-                                <option value="female">Female</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -59,18 +59,18 @@
                         </div>
                         <div class="form-group">
                             <label for="mpn">Phone Number</label>
-                            <input type="tel" class="form-control" id="mpn" pattern="[0-9]{10}" >
+                            <input type="tel" class="form-control" id="mpn" pattern="[0-9]{10}">
                         </div>
                         <br>
                         <div class="row g-3">
                             <div class="col-md-4">               
-                                <button type="submit" value="add" class="btn btn-primary" >Add</button>
+                                <button type="submit" value="add"  id="add" class="btn btn-primary" >Add</button>
                             </div>
                             <div class="col-md-4">
-                                <button type="submit" value="update" class="btn btn-secondary">Update</button>
+                                <button type="submit" value="update" id="update" class="btn btn-secondary">Update</button>
                             </div>
                             <div class="col-md-4">
-                                <button type="submit" value="delete" class="btn btn-danger">Delete</button>
+                                <button type="submit" value="delete" id="delete" class="btn btn-danger">Delete</button>
                             </div>
                         </div>                   
                     </form>
@@ -90,41 +90,43 @@
     let date=document.getElementById('md')
     let gender=document.getElementById('mg')
     let number=document.getElementById('mpn')
-    let form=document.getElementById('memberform')  
-
+    let form=document.getElementById('memberform')
+    
     function submitForm(type){       
         event.preventDefault()
-        form.classList.add('was-validated') 
-        if (form.checkValidity()){
-            switch (type){
-                case 'add':{
+        event.stopPropagation()
+        console.log(type)
+        switch(type){
+                case "add":{
                     let data=JSON.stringify({"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value,"Passport":"/assets/images/default_image.png"})
                     fetch('http://127.0.0.1:8080/members',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
-                                    (result)=>{                    
-                                        if (!result.ok){                    
-                                            throw new Error(result.statusText);
-                                        }
-                                        return result.json();
-                                    }
-                                ).then(
-                                    (d)=>{       
-                                        y.classList.add("alter-warning")
-                                        y.innerHTML="Member added"
-                                        
-                                        id.value=d["ID"] 
-                                        name.value=d["Name"] 
-                                        date.value=d["DateofBirth"]  
-                                        gender.value=d["Gender"]  
-                                        number.value=d["PhoneNumber"]                  
-                                    }
-                                ).catch((e)=>{
-                                    y.className="alter alter-danger"
-                                    y.innerText=e
-                                    
-                                })            
-                    setTimeout(()=>{ y.innerText=""},5000)
+                        (result)=>{                    
+                            if (!result.ok){                    
+                                throw new Error(result.statusText);
+                            }
+                            return result.json();
+                        }).then(
+                            (d)=>{       
+                                if(d.hasOwnProperty('Error')){
+                                        y.classList.add("alter-danger")
+                                        y.innerHTML=d['Error']
+                                       
+                                }else{
+                                    y.classList.add("alter-success")
+                                    y.innerHTML="New Member successfully added"   
+                                    id.value=d["ID"] 
+                                    name.value=d["Name"] 
+                                    date.value=d["DateofBirth"]  
+                                    gender.value=d["Gender"]  
+                                    number.value=d["PhoneNumber"]  
+                                }                
+                            }).catch((e)=>{
+                            y.classList.add("alter-danger")
+                            y.innerText=e                                    
+                    })
+                    break
                 }
-                case 'update':{
+                case "update":{
                     let data=JSON.stringify({"ID":id.value,"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value})
                     fetch('http://127.0.0.1:8080/members',{ method:'PUT',headers:{'Content-Type':'application/json'},credentials:"include",body:data}).then(
                         (result)=>{                    
@@ -132,79 +134,91 @@
                                 throw new Error(result.statusText);
                             }
                             return result.json();
-                        }
-                    ).then(
-                        (d)=>{      
-                            y.classList.add("alter-warning")
-                            y.innerHTML="Member updated"
-                            
-                            id.value=d["ID"] 
-                            name.value=d["Name"] 
-                            date.value=d["DateofBirth"]  
-                            gender.value=d["Gender"]  
-                            number.value=d["PhoneNumber"]                               
-                        }
-                    ).catch((e)=>{
-                        y.className="alter alter-danger"
-                        y.innerText=e
-                        
-                    })            
-                    setTimeout(()=>{ y.innerText=""},5000)
+                        }).then(
+                            (d)=>{      
+                                if(d.hasOwnProperty('Error')){
+                                    y.classList.add("alter-danger")
+                                    y.innerHTML=d['Error']
+                                   
+                                }else{
+                                    y.classList.add("alter-success")
+                                    y.innerHTML="Member successfully updated"   
+                                    id.value=d["ID"] 
+                                    name.value=d["Name"] 
+                                    date.value=d["DateofBirth"]  
+                                    gender.value=d["Gender"]  
+                                    number.value=d["PhoneNumber"]  
+                                }                             
+                            }).catch((e)=>{
+                                y.classList.add("alter-danger")
+                                y.innerText=e
+                                    
+                            }) 
+                    break
                 }
-                case 'delete':{
+                case "delete":{
                     fetch('http://127.0.0.1:8080/members/'+id.value,{ method:'DELETE',headers:{'Content-Type':'application/json'},credentials:"include"}).then(
-                        (result)=>{                    
-                            if (!result.ok){                    
-                                throw new Error(result.statusText);
-                            }
+                    (result)=>{                    
+                        if (!result.ok){                    
+                            throw new Error(result.statusText);
+                        }
                             return result.json();
-                        }
-                    ).then(
-                        (d)=>{       
-                            y.classList.add("alter-warning")
-                            y.innerHTML="Member Deleted "
-                            
-                            id.value=d["ID"] 
-                            name.value=d["Name"] 
-                            date.value=d["DateofBirth"]  
-                            gender.value=d["Gender"]  
-                            number.value=d["PhoneNumber"]                                
-                        }
-                    ).catch((e)=>{
-                        y.className="alter alter-danger"
-                        y.innerText=e
-                        
-                    })            
-                    setTimeout(()=>{ y.innerText=""},5000)
+                        }).then(
+                            (d)=>{       
+                                if(d.hasOwnProperty('Error')){
+                                    y.classList.add("alter-danger")
+                                    y.innerHTML=d['Error']
+                                   
+                                }else{
+                                    y.classList.add("alter-success")
+                                    y.innerHTML="Member successfully deleted"   
+                                    id.value=d["ID"] 
+                                    name.value=d["Name"] 
+                                    date.value=d["DateofBirth"]  
+                                    gender.value=d["Gender"]  
+                                    number.value=d["PhoneNumber"]  
+                                }                                  
+                        }).catch((e)=>{
+                            y.classList.add("alter-danger")
+                            y.innerText=e
+                        })          
+                    break
                 }
-                case 'search':{
+                case "search":{
                     fetch('http://127.0.0.1:8080/members/'+id.value,{ method:'GET',headers:{'Content-Type':'application/json'},credentials:"include"}).then(
-                        (result)=>{                    
-                            if (!result.ok){                    
-                                throw new Error(result.statusText);
-                            }
+                    (result)=>{                    
+                        if (!result.ok){                    
+                            throw new Error(result.statusText);
+                        }
                             return result.json();
-                        }
-                    ).then(
-                        (d)=>{       
-                            y.classList.add("alter-warning")
-                            y.innerHTML="Member found "
-                            
-                            id.value=d["ID"] 
-                            name.value=d["Name"] 
-                            date.value=d["DateofBirth"]  
-                            gender.value=d["Gender"]  
-                            number.value=d["PhoneNumber"]               
-                        }
-                    ).catch((e)=>{
-                        y.className="alter alter-danger"
-                        y.innerText=e
-                        
-                    })            
-                    setTimeout(()=>{ y.innerText=""},5000)
+                        }).then(
+                            (d)=>{       
+                                if(d.hasOwnProperty('Error')){
+                                    y.classList.add("alter-danger")
+                                    y.innerHTML=d['Error']
+                                   
+                                }else{
+                                    y.classList.add("alter-success")
+                                    y.innerHTML="Member was found"   
+                                    id.value=d["ID"] 
+                                    name.value=d["Name"] 
+                                    date.value=d["DateofBirth"]  
+                                    gender.value=d["Gender"]  
+                                    number.value=d["PhoneNumber"]  
+                                }                 
+                            }).catch((e)=>{
+                                y.classList.add("alter-danger")
+                                y.innerText=e
+                                
+                            })   
+                    break
                 }
             }
-        }
-        event.
-    }       
+       
+        setTimeout(()=>{ 
+            y.className="alter"
+            y.innerHTML=""
+        },10000)
+    }
+    
 </script>

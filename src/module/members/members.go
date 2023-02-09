@@ -11,9 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
-	"github.com/paulwainaina/timeformater"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -29,19 +27,19 @@ type Member struct {
 }
 
 func (member *Member) Marshal(v interface{}) ([]byte, error) {
-	t, err := time.Parse(time.RFC3339, member.DateofBirth)
+	/*t, err := time.Parse(time.RFC3339, member.DateofBirth)
 	if err != nil {
 		return []byte{}, err
-	}
+	}*/
 	memb, err := json.Marshal(Member{
 		ID:          member.ID,
 		Name:        member.Name,
 		Gender:      member.Gender,
 		Deceased:    member.Deceased,
 		PhoneNumber: member.PhoneNumber,
-		DateofBirth: string(strconv.Itoa(t.Year()) + "-" + strconv.Itoa(int(t.Month())) + "-" + strconv.Itoa(t.Day())),
+		DateofBirth: member.DateofBirth,
 	})
-	return memb, nil
+	return memb, err
 }
 
 func (member *Member) UnmarshalJSON(data []byte) error {
@@ -83,12 +81,7 @@ func (member *Member) UnmarshalJSON(data []byte) error {
 			}
 		case "dateofbirth":
 			{
-				tf := timeformater.NewTimeFormater()
-				t, er := tf.ConvertDateToTime(v.(string), "-")
-				if er != nil {
-					return er
-				}
-				member.DateofBirth = t.String()
+				member.DateofBirth = v.(string)
 			}
 		}
 	}
@@ -203,11 +196,12 @@ func (members *Members) UpdateMember(memb Member) (*Member, error) {
 					"Name":        memb.Name,
 					"DateofBirth": memb.DateofBirth,
 					"Deceased":    memb.Deceased,
-					"Gender":      memb.Gender}})
+					"Gender":      memb.Gender,
+					"PhoneNumber": memb.PhoneNumber}})
 			if err != nil {
 				return &Member{}, err
 			}
-			m = &memb
+			*m = memb
 			return m, nil
 		}
 	}
@@ -222,7 +216,6 @@ func (members *Members) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				v, err := json.Marshal(members.TargetMembers)
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(err.Error()))
 					return
 				}
 				w.WriteHeader(http.StatusOK)
@@ -233,16 +226,13 @@ func (members *Members) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				var member Member
 				err := json.NewDecoder(r.Body).Decode(&member)
 				if err != nil {
-					fmt.Println(err)
 					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(err.Error()))
 					return
 				}
 				v, err := members.AddMember(member)
 				if err != nil {
-					fmt.Println(err)
-					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(err.Error()))
+					res := struct{ Error string }{Error: err.Error()}
+					json.NewEncoder(w).Encode(res)
 					return
 				}
 				w.WriteHeader(http.StatusOK)
@@ -254,13 +244,12 @@ func (members *Members) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				err := json.NewDecoder(r.Body).Decode(&member)
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(err.Error()))
 					return
 				}
 				v, err := members.UpdateMember(member)
 				if err != nil {
-					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(err.Error()))
+					res := struct{ Error string }{Error: err.Error()}
+					json.NewEncoder(w).Encode(res)
 					return
 				}
 				w.WriteHeader(http.StatusOK)
@@ -288,8 +277,8 @@ func (members *Members) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			{
 				product, err := members.GetMemberByID(uint64(id))
 				if err != nil {
-					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(err.Error()))
+					res := struct{ Error string }{Error: err.Error()}
+					json.NewEncoder(w).Encode(res)
 					return
 				}
 				w.WriteHeader(http.StatusOK)
@@ -299,8 +288,8 @@ func (members *Members) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			{
 				product, err := members.DeleteMemberByID(uint64(id))
 				if err != nil {
-					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(err.Error()))
+					res := struct{ Error string }{Error: err.Error()}
+					json.NewEncoder(w).Encode(res)
 					return
 				}
 				w.WriteHeader(http.StatusOK)
