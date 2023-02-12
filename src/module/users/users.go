@@ -213,7 +213,7 @@ func (users *Users) UpdateUser(usr User) (*User, error) {
 			if err != nil {
 				return &User{}, err
 			}
-			m = &usr
+			*m = usr
 			return m, nil
 		}
 	}

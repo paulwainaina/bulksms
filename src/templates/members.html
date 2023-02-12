@@ -17,6 +17,10 @@
                                 Date of Birth: {{$i.DateofBirth}}
                                 <br>
                                 Phone Number: {{$i.PhoneNumber}}
+                                <br>
+                                Email: {{$i.Email}}
+                                <br>
+                                District: {{$i.District}}
                             </p>
                         </div>
                     </div>
@@ -61,6 +65,22 @@
                             <label for="mpn">Phone Number</label>
                             <input type="tel" class="form-control" id="mpn" pattern="[0-9]{10}">
                         </div>
+                        <div class="form-group">
+                            <label class="form-label" for="me" >Email</label>
+                            <input type="email" class="form-control" id="me" >
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="md" >District</label>
+                            <select type="text" class="form-select" id="md">
+                                <option selected></option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                            </select>
+                        </div>
                         <br>
                         <div class="row g-3">
                             <div class="col-md-4">               
@@ -91,6 +111,8 @@
     let gender=document.getElementById('mg')
     let number=document.getElementById('mpn')
     let form=document.getElementById('memberform')
+    let email=document.getElementById('me')
+    let district=document.getElementById('md')
     
     function submitForm(type){       
         event.preventDefault()
@@ -98,7 +120,7 @@
         console.log(type)
         switch(type){
                 case "add":{
-                    let data=JSON.stringify({"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value,"Passport":"/assets/images/default_image.png"})
+                    let data=JSON.stringify({"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value,"Passport":"/assets/images/default_image.png","Email":email.value,"District":district.value})
                     fetch('http://127.0.0.1:8080/members',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
                         (result)=>{                    
                             if (!result.ok){                    
@@ -127,7 +149,7 @@
                     break
                 }
                 case "update":{
-                    let data=JSON.stringify({"ID":id.value,"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value})
+                    let data=JSON.stringify({"ID":id.value,"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value,"Email":email.value,"District":district.value})
                     fetch('http://127.0.0.1:8080/members',{ method:'PUT',headers:{'Content-Type':'application/json'},credentials:"include",body:data}).then(
                         (result)=>{                    
                             if (!result.ok){                    

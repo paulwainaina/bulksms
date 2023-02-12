@@ -102,6 +102,7 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 		page = &Page{Title: pageName}
 	}
 	page.Title = pageName
+	page.Data=memb.TargetMembers
 	RenderTemplate(w, file, page)
 }
 

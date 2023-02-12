@@ -1,5 +1,18 @@
 {{template "header"}}
     <title>{{.Title}}</title>
 {{template "body"}} 
-
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Number of registered members</h5>
+            <p class="card-body">
+                Number: {{len .Data}}  
+                {{range $i:=.Data}} 
+               
+                {{$i.Gender==}}
+                {{end}}
+            </p>
+        </div>
+    </div>
+</div>
 {{template "footer"}}

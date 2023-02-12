@@ -24,6 +24,8 @@ type Member struct {
 	Passport    string `bson:"Passport"`
 	Deceased    bool   `bson:"Deceased"`
 	PhoneNumber string `bson:"PhoneNumber"`
+	Email       string `bson:"Email"`
+	District    uint    `bson:"District"`
 }
 
 func (member *Member) Marshal(v interface{}) ([]byte, error) {
@@ -38,6 +40,8 @@ func (member *Member) Marshal(v interface{}) ([]byte, error) {
 		Deceased:    member.Deceased,
 		PhoneNumber: member.PhoneNumber,
 		DateofBirth: member.DateofBirth,
+		Email: member.Email,
+		District: member.District,
 	})
 	return memb, err
 }
@@ -50,6 +54,19 @@ func (member *Member) UnmarshalJSON(data []byte) error {
 	}
 	for k, v := range jsonData {
 		switch strings.ToLower(k) {
+		case "district":
+			{
+				str := string(v.(string))
+				i, err := strconv.ParseInt(str, 10, 32)
+				if err != nil {
+					return err
+				}
+				member.District = uint(i)
+			}
+		case "email":
+			{
+				member.Email= string(v.(string))
+			}
 		case "id":
 			{
 				str := string(v.(string))
@@ -83,6 +100,7 @@ func (member *Member) UnmarshalJSON(data []byte) error {
 			{
 				member.DateofBirth = v.(string)
 			}
+
 		}
 	}
 	return nil
@@ -197,7 +215,10 @@ func (members *Members) UpdateMember(memb Member) (*Member, error) {
 					"DateofBirth": memb.DateofBirth,
 					"Deceased":    memb.Deceased,
 					"Gender":      memb.Gender,
-					"PhoneNumber": memb.PhoneNumber}})
+					"PhoneNumber": memb.PhoneNumber,
+					"Email":memb.Email,
+					"District":memb.District,
+				}})
 			if err != nil {
 				return &Member{}, err
 			}
