@@ -70,8 +70,8 @@
                             <input type="email" class="form-control" id="me" >
                         </div>
                         <div class="form-group">
-                            <label class="form-label" for="md" >District</label>
-                            <select type="text" class="form-select" id="md">
+                            <label class="form-label" for="mdi" >District</label>
+                            <select type="number" class="form-select" id="mdi">
                                 <option selected></option>
                                 <option value="1">1</option>
                                 <option value="2">2</option>
@@ -112,7 +112,7 @@
     let number=document.getElementById('mpn')
     let form=document.getElementById('memberform')
     let email=document.getElementById('me')
-    let district=document.getElementById('md')
+    let district=document.getElementById('mdi')
     
     function submitForm(type){       
         event.preventDefault()
@@ -141,6 +141,8 @@
                                     date.value=d["DateofBirth"]  
                                     gender.value=d["Gender"]  
                                     number.value=d["PhoneNumber"]  
+                                    email.value=d["Email"]
+                                    district.value=d["District"]
                                 }                
                             }).catch((e)=>{
                             y.classList.add("alter-danger")
@@ -170,6 +172,8 @@
                                     date.value=d["DateofBirth"]  
                                     gender.value=d["Gender"]  
                                     number.value=d["PhoneNumber"]  
+                                    email.value=d["Email"]
+                                    district.value=d["District"]
                                 }                             
                             }).catch((e)=>{
                                 y.classList.add("alter-danger")
@@ -198,7 +202,9 @@
                                     name.value=d["Name"] 
                                     date.value=d["DateofBirth"]  
                                     gender.value=d["Gender"]  
-                                    number.value=d["PhoneNumber"]  
+                                    number.value=d["PhoneNumber"] 
+                                    email.value=d["Email"]
+                                    district.value=d["District"] 
                                 }                                  
                         }).catch((e)=>{
                             y.classList.add("alter-danger")
@@ -227,6 +233,8 @@
                                     date.value=d["DateofBirth"]  
                                     gender.value=d["Gender"]  
                                     number.value=d["PhoneNumber"]  
+                                    email.value=d["Email"]
+                                    district.value=d["District"]
                                 }                 
                             }).catch((e)=>{
                                 y.classList.add("alter-danger")

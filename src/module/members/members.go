@@ -264,6 +264,7 @@ func (members *Members) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				var member Member
 				err := json.NewDecoder(r.Body).Decode(&member)
 				if err != nil {
+					fmt.Println(err)
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}

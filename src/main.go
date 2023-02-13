@@ -107,14 +107,15 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func MessageHandler(w http.ResponseWriter, r *http.Request) {
-	file := "login.html"
+	file := "message.html"
 	filePath := "templates/" + file
-	pageName := "Login Page"
+	pageName := "Message Page"
 	page, err := LoadPage(filePath)
 	if err != nil {
 		page = &Page{Title: pageName}
 	}
 	page.Title = pageName
+	page.Data=memb.TargetMembers
 	RenderTemplate(w, file, page)
 }
 
@@ -165,8 +166,8 @@ func main() {
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets"))))
 
 	users := users.NewUsers(auth, client)
-	http.Handle("/users", http.HandlerFunc(users.ServeHTTP))
-	http.Handle("/users/", http.HandlerFunc(users.ServeHTTP))
+	http.Handle("/users",middleware( http.HandlerFunc(users.ServeHTTP)))
+	http.Handle("/users/",middleware( http.HandlerFunc(users.ServeHTTP)))
 	http.Handle("/login", middleware(http.HandlerFunc(users.ServeHTTP)))
 
 	memb = members.NewMembers(client)
