@@ -135,7 +135,13 @@ func UploadHandler(w http.ResponseWriter,r *http.Request){
 		return
 	}
 	defer file.Close()
-	tmp,err:=ioutil.TempFile("tmpimages","upload-*.png")
+	/*err=os.Mkdir("./assets/images",os.ModePerm)
+	if err!=nil{
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}*/
+	path:=fmt.Sprintf("./assets/images/%d%s",time.Now().UnixNano(), handler.Filename)
+	tmp,err:=os.Create(path)
 	if err!=nil{
 		res := struct{ Error string }{Error: err.Error()}
 		json.NewEncoder(w).Encode(res)
@@ -149,6 +155,7 @@ func UploadHandler(w http.ResponseWriter,r *http.Request){
 		return
 	}
 	tmp.Write(filebyte)
+
 }
 
 func middleware(next http.Handler) http.Handler {
