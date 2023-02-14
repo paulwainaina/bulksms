@@ -57,6 +57,9 @@ func (member *Member) UnmarshalJSON(data []byte) error {
 		case "district":
 			{
 				str := string(v.(string))
+				if len(str)==0{
+					break
+				}
 				i, err := strconv.ParseInt(str, 10, 32)
 				if err != nil {
 					return err
@@ -70,6 +73,9 @@ func (member *Member) UnmarshalJSON(data []byte) error {
 		case "id":
 			{
 				str := string(v.(string))
+				if len(str)==0{
+					break
+				}
 				i, err := strconv.ParseInt(str, 10, 64)
 				if err != nil {
 					return err

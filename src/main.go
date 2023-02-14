@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -119,6 +121,36 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	RenderTemplate(w, file, page)
 }
 
+func UploadHandler(w http.ResponseWriter,r *http.Request){
+	err:=r.ParseMultipartForm(10<<20)
+	if err!=nil{
+		res := struct{ Error string }{Error: err.Error()}
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+	file,handler,err:=r.FormFile("Passport")
+	if err!=nil{
+		res := struct{ Error string }{Error: err.Error()}
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+	defer file.Close()
+	tmp,err:=ioutil.TempFile("tmpimages","upload-*.png")
+	if err!=nil{
+		res := struct{ Error string }{Error: err.Error()}
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+	defer tmp.Close()
+	filebyte,err:=ioutil.ReadAll(file)
+	if err!=nil{
+		res := struct{ Error string }{Error: err.Error()}
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+	tmp.Write(filebyte)
+}
+
 func middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-cache")
@@ -179,6 +211,7 @@ func main() {
 	http.Handle("/messagesPage", middleware(http.HandlerFunc(MessageHandler)))
 	http.Handle("/index", middleware(http.HandlerFunc(IndexHandler)))
 	http.Handle("/registerPage", middleware(http.HandlerFunc(RegisterHandler)))
+	http.Handle("/upload", middleware(http.HandlerFunc(UploadHandler)))
 
 	http.Handle("/", http.RedirectHandler("/index", http.StatusSeeOther))
 
