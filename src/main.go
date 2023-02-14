@@ -155,7 +155,7 @@ func UploadHandler(w http.ResponseWriter,r *http.Request){
 		return
 	}
 	tmp.Write(filebyte)
-
+	json.NewEncoder(w).Encode(struct{Path string}{Path:path[1:]})
 }
 
 func middleware(next http.Handler) http.Handler {

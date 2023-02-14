@@ -45,6 +45,10 @@
                             </div> 
                         </div>
                         <br>
+                        <div class="form-group"  style="margin:auto">
+                            <img id="pass" src="/assets/images/default_image.png" style="height:75px;width:75px"  />
+                            <input type="file" id="passfile" accept="image/*">
+                        </div>
                         <div class="form-group">
                             <label for="mn">Name</label>
                             <input type="text" class="form-control" id="mn">
@@ -113,14 +117,44 @@
     let form=document.getElementById('memberform')
     let email=document.getElementById('me')
     let district=document.getElementById('mdi')
-    
+    let pas=document.getElementById('pass')
+    let pasf=document.getElementById('passfile')
+
+    pasf.addEventListener('change',e=>{ 
+        const data= new FormData()
+        data.append('Passport',e.target.files[0])
+        fetch('http://127.0.0.1:8080/upload',{ method:'POST',credentials:"include",body: data}).then(
+           (result)=>{
+                if (!result.ok){                    
+                    throw new Error(result.statusText);
+                }
+                return result.json()
+              
+                
+            } 
+        ).then( (d)=>{
+            if(d.hasOwnProperty('Error')){
+                y.classList.add("alter-danger")
+                y.innerHTML=d['Error']
+            }else{
+                y.classList.add("alter-success")
+                y.innerHTML="Passport successfully updated" 
+                pas.src=d['Path']
+            }}
+
+        ).catch((e)=>{
+            y.classList.add("alter-danger")
+            y.innerText=e  
+        })
+    })
+
     function submitForm(type){       
         event.preventDefault()
         event.stopPropagation()
         console.log(type)
         switch(type){
                 case "add":{
-                    let data=JSON.stringify({"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value,"Passport":"/assets/images/default_image.png","Email":email.value,"District":district.value})
+                    let data=JSON.stringify({"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value,"Passport":pas.value,"Email":email.value,"District":district.value})
                     fetch('http://127.0.0.1:8080/members',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
                         (result)=>{                    
                             if (!result.ok){                    
@@ -143,6 +177,7 @@
                                     number.value=d["PhoneNumber"]  
                                     email.value=d["Email"]
                                     district.value=d["District"]
+                                    pas.src=d["Passport"]
                                 }                
                             }).catch((e)=>{
                             y.classList.add("alter-danger")
@@ -174,6 +209,7 @@
                                     number.value=d["PhoneNumber"]  
                                     email.value=d["Email"]
                                     district.value=d["District"]
+                                    pas.src=d["Passport"]
                                 }                             
                             }).catch((e)=>{
                                 y.classList.add("alter-danger")
@@ -205,6 +241,7 @@
                                     number.value=d["PhoneNumber"] 
                                     email.value=d["Email"]
                                     district.value=d["District"] 
+                                    pas.src=d["Passport"]
                                 }                                  
                         }).catch((e)=>{
                             y.classList.add("alter-danger")
@@ -235,6 +272,7 @@
                                     number.value=d["PhoneNumber"]  
                                     email.value=d["Email"]
                                     district.value=d["District"]
+                                    pas.src=d["Passport"]
                                 }                 
                             }).catch((e)=>{
                                 y.classList.add("alter-danger")
