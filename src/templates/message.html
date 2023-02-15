@@ -7,7 +7,7 @@
                 <div class="col-mb-6" style="overflow:scroll;width:200px;height:200px">                
                     {{range $i:=.Data}}
                     <label for="number" class="option">{{$i.Name}} {{$i.PhoneNumber}}</label> 
-                    <input type="checkbox" class="checkbox" data-id="{{$i.ID}}"><br>
+                    <input type="checkbox" class="checkbox" value="{{$i.PhoneNumber}}"><br>
                     {{end}}
                 </div>
                 <div class="col-md-6">
@@ -38,7 +38,12 @@
 <script>
     function message(){            
         let y=document.getElementById('errorDiv')
-        let data=JSON.stringify({"Number":document.getElementById("number").value,"Message":document.getElementById("message").value})
+        let check=document.querySelectorAll('input[type=checkbox]:checked')
+        let num=[]
+        for(var i=0;i<check.length;i++){
+            num.push(check[i].value)
+        }
+        let data=JSON.stringify({"Number":num,"Message":document.getElementById("message").value})
         fetch('http://127.0.0.1:8080/message',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
             (result)=>{                    
                 if (!result.ok){                    

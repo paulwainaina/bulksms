@@ -57,7 +57,6 @@ func RenderTemplate(w http.ResponseWriter, file string, page *Page) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
-
 func MemberHandler(w http.ResponseWriter, r *http.Request) {
 	file := "members.html"
 	filePath := "templates/" + file
