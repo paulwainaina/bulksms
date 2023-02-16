@@ -85,14 +85,14 @@ func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
 }
+
 func NewUsers(auth *session.SessionManager, client *mongo.Client) *Users {
 	db := client.Database(os.Getenv("DB"))
 	users := make([]*User, 0)
-	/*names,err := db.ListCollectionNames(context.TODO(),bson.D{})
+	names,err := db.ListCollectionNames(context.TODO(),bson.D{})
 	if err != nil {
 		fmt.Println(err)
-		log.Fatal("Error loading users")
-
+		log.Fatal("Error loading collections")
 	}
 	exists :=false
 	for _,name:=range names{
@@ -111,18 +111,17 @@ func NewUsers(auth *session.SessionManager, client *mongo.Client) *Users {
 		}else{
 			users = append(users, &user)
 		}
-	}else{*/
-	col := db.Collection(userCollection)
-	result, err := col.Find(context.TODO(), bson.M{})
-
-	if err != nil {
-		log.Fatal(err.Error())
-	} else {
-		if err = result.All(context.TODO(), &users); err != nil {
-			log.Fatal("Error parsing purchases data " + err.Error())
+	}else{
+		col := db.Collection(userCollection)
+		result, err := col.Find(context.TODO(), bson.M{})
+		if err != nil {
+			log.Fatal(err.Error())
+		} else {
+			if err = result.All(context.TODO(), &users); err != nil {
+				log.Fatal("Error parsing users data " + err.Error())
+			}
 		}
 	}
-
 	return &Users{systemUsers: users, pattern: regexp.MustCompile(`^/users/(\d+)/?`), authSession: auth, db: client}
 }
 

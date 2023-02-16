@@ -2,15 +2,15 @@
     <title>{{.Title}}</title>
 {{template "body"}}  
     <div class="container" style="margin:auto;width:60%;padding:20px">
-        <form >
+        <form id="mform">
             <div class="row g-2">                
-                <div class="col-mb-6" style="overflow:scroll;width:200px;height:200px">                
+                <div class="col-mb-8" style="overflow:scroll;width:200px;height:200px">                
                     {{range $i:=.Data}}
                     <label for="number" class="option">{{$i.Name}} {{$i.PhoneNumber}}</label> 
-                    <input type="checkbox" class="checkbox" value="{{$i.PhoneNumber}}"><br>
+                    <input type="checkbox" class="checkbox" value="{{$i.PhoneNumber}}" ><br>
                     {{end}}
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label class="form-label" for="md" >District</label>
                     <select type="text" class="form-select" id="md">
                         <option selected></option>
@@ -24,42 +24,65 @@
                 </div>
             </div>
             <div class="mb-3">
+                <label for="title" class="form-label">Message Title</label>
+                <input type="text" class="form-control" id="title"  required>
+            </div>
+            <div class="mb-3">
                 <label for="message" class="form-label">Message</label>
                 <textarea type="text" class="form-control" id="message" row="3" required></textarea>
             </div>
             <br>  
             <div class="col-mb-3">
-                <button type="button" onClick='message()' class="btn btn-primary">Message</button>
+                <button type="submit"  class="btn btn-primary">Message</button>
             </div>            
         </form> 
         <div id="errorDiv"></div>
     </div>
 {{template "footer"}}
 <script>
-    function message(){            
-        let y=document.getElementById('errorDiv')
-        let check=document.querySelectorAll('input[type=checkbox]:checked')
-        let num=[]
-        for(var i=0;i<check.length;i++){
-            num.push(check[i].value)
-        }
-        let data=JSON.stringify({"Number":num,"Message":document.getElementById("message").value})
-        fetch('http://127.0.0.1:8080/message',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
-            (result)=>{                    
-                if (!result.ok){                    
-                    throw new Error(result.statusText);
-                }
-                return result.json();
+    var form=document.getElementById("mform")
+    form.addEventListener("submit", function(event){  
+        event.preventDefault()
+        event.stopPropagation()
+        if (form.checkValidity()){
+            form.classList.add('was-validated') 
+            let y=document.getElementById('errorDiv')
+            let check=document.querySelectorAll('input[type=checkbox]:checked')
+            let num=[]
+            for(var i=0;i<check.length;i++){
+                num.push(check[i].value)
             }
-        ).then(
-            (data)=>{       
-              
+            if(num.length==0){
+                y.classList.add("alter-danger")
+                y.innerHTML="No receipients selected"
+                form.classList.remove('was-validated')
+            }else{
+                let data=JSON.stringify({"Numbers":num,"District":document.getElementById("md").value,"Title":document.getElementById("title").value,"Message":document.getElementById("message").value})
+                fetch('http://127.0.0.1:8080/message',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
+                    (result)=>{                    
+                        if (!result.ok){                    
+                            throw new Error(result.statusText);
+                        }
+                        return result.json();
+                    }
+                ).then(
+                    (data)=>{       
+                        if(data.hasOwnProperty('Error')){
+                            y.classList.add("alter-danger")
+                            y.innerHTML=data['Error']
+                            form.classList.remove('was-validated')
+                        }else{
+                            y.classList.add("alter-success")
+                            y.innerHTML="Message sent"
+                        }
+                    }
+                ).catch((e)=>{
+                    y.className="alter alter-danger"
+                    y.innerText=e
+                    form.classList.remove('was-validated')
+                }) 
             }
-        ).catch((e)=>{
-            y.className="alter alter-danger"
-            y.innerText=e
-            y.role="alert"
-        })            
+        }           
         setTimeout(()=>{ y.innerText=""},5000)
-    }        
+    } )      
 </script>

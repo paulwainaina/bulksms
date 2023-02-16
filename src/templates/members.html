@@ -9,6 +9,7 @@
                 <div class="col">
                     <div class="card">
                         <img class="card-img-top" src={{$i.Passport}}>
+                      
                         <div class="card-body">
                             <h5 class="card-title">{{$i.ID}} : {{$i.Name}}</h5>
                             <p class="card-body">
@@ -154,7 +155,7 @@
         console.log(type)
         switch(type){
                 case "add":{
-                    let data=JSON.stringify({"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value,"Passport":pas.value,"Email":email.value,"District":district.value})
+                    let data=JSON.stringify({"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value,"Passport":pas.src,"Email":email.value,"District":district.value})
                     fetch('http://127.0.0.1:8080/members',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
                         (result)=>{                    
                             if (!result.ok){                    
@@ -186,7 +187,7 @@
                     break
                 }
                 case "update":{
-                    let data=JSON.stringify({"ID":id.value,"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value,"Email":email.value,"District":district.value})
+                    let data=JSON.stringify({"Passport":pas.src,"ID":id.value,"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value,"Email":email.value,"District":district.value})
                     fetch('http://127.0.0.1:8080/members',{ method:'PUT',headers:{'Content-Type':'application/json'},credentials:"include",body:data}).then(
                         (result)=>{                    
                             if (!result.ok){                    

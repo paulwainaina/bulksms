@@ -23,7 +23,6 @@ var (
 	tpl    *template.Template
 	auth   = session.NewSessionManager()
 	client *mongo.Client
-	err    error
 	memb   *members.Members
 )
 
@@ -106,8 +105,23 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	page.Data=memb.TargetMembers
 	RenderTemplate(w, file, page)
 }
-
 func MessageHandler(w http.ResponseWriter, r *http.Request) {
+	type BulkMessage struct{
+		Numbers []interface{} `bson:"Numbers"`
+		District string `bson:"District"`
+		Title string	`bson:"Title"`
+		Message string `bson:"Message"`
+	}
+	bulk:=BulkMessage{}
+	err := json.NewDecoder(r.Body).Decode(&bulk)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	fmt.Println(bulk)
+	json.NewEncoder(w).Encode(bulk)
+}
+func MessagePageHandler(w http.ResponseWriter, r *http.Request) {
 	file := "message.html"
 	filePath := "templates/" + file
 	pageName := "Message Page"
@@ -214,10 +228,11 @@ func main() {
 
 	http.Handle("/membersPage", middleware(http.HandlerFunc(MemberHandler)))
 	http.Handle("/loginPage", middleware(http.HandlerFunc(LoginHandler)))
-	http.Handle("/messagesPage", middleware(http.HandlerFunc(MessageHandler)))
+	http.Handle("/messagesPage", middleware(http.HandlerFunc(MessagePageHandler)))
 	http.Handle("/index", middleware(http.HandlerFunc(IndexHandler)))
 	http.Handle("/registerPage", middleware(http.HandlerFunc(RegisterHandler)))
 	http.Handle("/upload", middleware(http.HandlerFunc(UploadHandler)))
+	http.Handle("/message", middleware(http.HandlerFunc(MessageHandler)))
 
 	http.Handle("/", http.RedirectHandler("/index", http.StatusSeeOther))
 
