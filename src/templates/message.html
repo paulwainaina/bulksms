@@ -52,7 +52,7 @@
             for(var i=0;i<check.length;i++){
                 num.push(check[i].value)
             }
-            if(num.length==0){
+            if(num.length==0 &&document.getElementById("md").value=="" ){
                 y.classList.add("alter-danger")
                 y.innerHTML="No receipients selected"
                 form.classList.remove('was-validated')

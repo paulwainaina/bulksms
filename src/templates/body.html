@@ -1,6 +1,15 @@
 {{define "body"}}
 </head>
-<body >  
+<body > 
+  <script>
+    function logout(){
+      fetch('http://127.0.0.1:8080/logout',{ method:'GET',credentials:"include"}).then(
+        ()=>{
+        window.location.assign("http://127.0.0.1:8080/loginPage")
+        }
+      ).catch()
+    }
+  </script> 
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
           <a class="navbar-brand" href="/index">PCEA DATABASE  </a>
@@ -14,6 +23,9 @@
               </li>
               <li class="nav-item">
                 <a class="nav-link" href="/messagesPage">Messages</a>
+              </li>
+              <li class="nav-item" style="float: right; width: 100%;">
+                <button class="button btn-danger" onclick="logout()" >Logout</a>
               </li>
             </ul>
           </div>

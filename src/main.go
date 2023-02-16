@@ -7,7 +7,9 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"strings"
 	"text/template"
 	"time"
 
@@ -118,8 +120,32 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	fmt.Println(bulk)
-	json.NewEncoder(w).Encode(bulk)
+	jdata:=url.Values{}
+	jdata.Set("username",os.Getenv("USERNAME"))
+	recp:=bulk.Numbers[0].(string)
+	for i:=1;i<len(bulk.Numbers);i++{
+		recp+=","
+		recp+=bulk.Numbers[i].(string)
+	}
+	jdata.Set("to",recp)
+	jdata.Set("message",bulk.Message)
+	jdata.Set("from",os.Getenv("FROM"))
+	
+	fmt.Println(jdata)
+	res,err:=http.NewRequest(http.MethodPost,os.Getenv("APIURL"),strings.NewReader(jdata.Encode()))
+	if err!=nil{
+		res := struct{ Error string }{Error: err.Error()}
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+	res.Header.Add("Accept"," Application/json")
+	res.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	res.Header.Add("apiKey", os.Getenv("APIKEY"))
+
+	client:=&http.Client{}
+	resp,_:=client.Do(res)
+	fmt.Println(resp.Status)
+	json.NewEncoder(w).Encode(resp.Body)
 }
 func MessagePageHandler(w http.ResponseWriter, r *http.Request) {
 	file := "message.html"
@@ -133,7 +159,17 @@ func MessagePageHandler(w http.ResponseWriter, r *http.Request) {
 	page.Data=memb.TargetMembers
 	RenderTemplate(w, file, page)
 }
-
+func LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	cok,_ := r.Cookie(os.Getenv("AuthCookieName"))
+	auth.DeleteSessionByID(cok.Value)
+	http.SetCookie(w, &http.Cookie{
+		Name:     os.Getenv("AuthCookieName"),
+		Value:    "",
+		Expires:  time.Now(),
+		Path:     "/",
+		SameSite: http.SameSiteStrictMode,
+	})
+}
 func UploadHandler(w http.ResponseWriter,r *http.Request){
 	err:=r.ParseMultipartForm(10<<20)
 	if err!=nil{
@@ -233,6 +269,7 @@ func main() {
 	http.Handle("/registerPage", middleware(http.HandlerFunc(RegisterHandler)))
 	http.Handle("/upload", middleware(http.HandlerFunc(UploadHandler)))
 	http.Handle("/message", middleware(http.HandlerFunc(MessageHandler)))
+	http.Handle("/logout",middleware(http.HandlerFunc(LogoutHandler)))
 
 	http.Handle("/", http.RedirectHandler("/index", http.StatusSeeOther))
 
