@@ -1,52 +1,67 @@
 {{template "header"}}
     <title>{{.Title}}</title>
 {{template "body"}}  
-    <div class="container" style="margin:auto;width:60%;padding:20px">
-        <form id="mform">
-            <div class="row g-2">                
-                <div class="col-mb-8" style="overflow:scroll;width:200px;height:200px">                
-                    {{range $i:=.Data}}
-                    <label for="number" class="option">{{$i.Name}} {{$i.PhoneNumber}}</label> 
-                    <input type="checkbox" class="checkbox" value="{{$i.PhoneNumber}}" ><br>
-                    {{end}}
+    <div class="container" >
+        <div class="row">
+            <div class="col-9"style="margin:auto;padding:20px">
+                <form id="mform">
+                    <div class="row g-2">                
+                        <div class="col-mb-8" style="overflow:scroll;width:200px;height:200px">                
+                            {{range $i:=.Data}}
+                            <label for="number" class="option">{{$i.Name}} {{$i.PhoneNumber}}</label> 
+                            <input type="checkbox" class="checkbox" value="{{$i.PhoneNumber}}" ><br>
+                            {{end}}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="md" >District</label>
+                            <select type="text" class="form-select" id="md">
+                                <option selected></option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Message Title</label>
+                        <input type="text" class="form-control" id="title"  required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Message</label>
+                        <textarea type="text" class="form-control" id="message" row="3" required></textarea>
+                    </div>
+                    <br>  
+                    <div class="col-mb-3">
+                        <button type="submit"  class="btn btn-primary">Message</button>
+                    </div>            
+                </form> 
+                <div id="errorDiv"></div>
+            </div>
+            <div class="col-3">
+                <div class="card">
+                    <h5 class="card-title" id="smshead"></h5>
+                    <p class="card-text">
+                        <ol id="smslist">
+
+                        </ol>
+                    </p>
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label" for="md" >District</label>
-                    <select type="text" class="form-select" id="md">
-                        <option selected></option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                    </select>
-                </div>
             </div>
-            <div class="mb-3">
-                <label for="title" class="form-label">Message Title</label>
-                <input type="text" class="form-control" id="title"  required>
-            </div>
-            <div class="mb-3">
-                <label for="message" class="form-label">Message</label>
-                <textarea type="text" class="form-control" id="message" row="3" required></textarea>
-            </div>
-            <br>  
-            <div class="col-mb-3">
-                <button type="submit"  class="btn btn-primary">Message</button>
-            </div>            
-        </form> 
-        <div id="errorDiv"></div>
+        </div>
     </div>
 {{template "footer"}}
-<script>
+<script>  
+    let y=document.getElementById('errorDiv')
     var form=document.getElementById("mform")
     form.addEventListener("submit", function(event){  
         event.preventDefault()
         event.stopPropagation()
         if (form.checkValidity()){
             form.classList.add('was-validated') 
-            let y=document.getElementById('errorDiv')
+          
             let check=document.querySelectorAll('input[type=checkbox]:checked')
             let num=[]
             for(var i=0;i<check.length;i++){
@@ -74,6 +89,18 @@
                         }else{
                             y.classList.add("alter-success")
                             y.innerHTML="Message sent"
+                            var d=JSON.parse(atob(data))
+                            const tn = document.createTextNode(d["SMSMessageData"]["Message"])
+                            document.getElementById("smshead").appendChild(tn)
+                            var li=document.getElementById("smslist")
+                            for(var i=0;i<d["SMSMessageData"]["Recipients"].length;i++){
+                                if(d["SMSMessageData"]["Recipients"][i]["status"]=="Success"){
+                                    const node = document.createElement("li");
+                                    const textnode = document.createTextNode(d["SMSMessageData"]["Recipients"][i]["messageId"]+" "+d["SMSMessageData"]["Recipients"][i]["number"]);
+                                    node.appendChild(textnode);
+                                    li.appendChild(node)
+                                }
+                            }
                         }
                     }
                 ).catch((e)=>{

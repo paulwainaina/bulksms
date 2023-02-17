@@ -106,20 +106,33 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	page.Title = pageName
 	page.Data=memb.TargetMembers
 	RenderTemplate(w, file, page)
-}
-func MessageHandler(w http.ResponseWriter, r *http.Request) {
-	type BulkMessage struct{
+}	
+type BulkMessage struct{
 		Numbers []interface{} `bson:"Numbers"`
 		District string `bson:"District"`
 		Title string	`bson:"Title"`
 		Message string `bson:"Message"`
-	}
+}
+func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	bulk:=BulkMessage{}
 	err := json.NewDecoder(r.Body).Decode(&bulk)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	ch:=make (chan *http.Response)
+	go sendasync(bulk,ch)
+	resp:=<-ch
+	defer resp.Body.Close()
+	bytes,err:=ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(bytes)
+}
+func sendasync(bulk BulkMessage,rc chan * http.Response)( error) {
 	jdata:=url.Values{}
 	jdata.Set("username",os.Getenv("USERNAME"))
 	recp:=bulk.Numbers[0].(string)
@@ -130,22 +143,21 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	jdata.Set("to",recp)
 	jdata.Set("message",bulk.Message)
 	jdata.Set("from",os.Getenv("FROM"))
-	
-	fmt.Println(jdata)
+
 	res,err:=http.NewRequest(http.MethodPost,os.Getenv("APIURL"),strings.NewReader(jdata.Encode()))
 	if err!=nil{
-		res := struct{ Error string }{Error: err.Error()}
-		json.NewEncoder(w).Encode(res)
-		return
+		return err
 	}
 	res.Header.Add("Accept"," Application/json")
 	res.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	res.Header.Add("apiKey", os.Getenv("APIKEY"))
 
 	client:=&http.Client{}
-	resp,_:=client.Do(res)
-	fmt.Println(resp.Status)
-	json.NewEncoder(w).Encode(resp.Body)
+	resp,err:=client.Do(res)
+	if err ==nil{
+		rc<-resp
+	}
+	return err
 }
 func MessagePageHandler(w http.ResponseWriter, r *http.Request) {
 	file := "message.html"
