@@ -201,7 +201,7 @@ func UploadHandler(w http.ResponseWriter,r *http.Request){
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}*/
-	path:=fmt.Sprintf("./assets/images/%d%s",time.Now().UnixNano(), handler.Filename)
+	path:=fmt.Sprintf("/tmp/data/assets/images/%d%s",time.Now().UnixNano(), handler.Filename)
 	tmp,err:=os.Create(path)
 	if err!=nil{
 		res := struct{ Error string }{Error: err.Error()}
@@ -263,7 +263,11 @@ func main() {
 		log.Fatal(err)
 	}
 	defer client.Disconnect(ctx)
-	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets"))))
+	p,err:=os.Getwd()
+	if err==nil{
+		fmt.Println(p)
+	}
+	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("/tmp/assets"))))
 
 	users := users.NewUsers(auth, client)
 	http.Handle("/users",middleware( http.HandlerFunc(users.ServeHTTP)))
@@ -278,7 +282,7 @@ func main() {
 	http.Handle("/loginPage", middleware(http.HandlerFunc(LoginHandler)))
 	http.Handle("/messagesPage", middleware(http.HandlerFunc(MessagePageHandler)))
 	http.Handle("/index", middleware(http.HandlerFunc(IndexHandler)))
-	http.Handle("/registerPage", middleware(http.HandlerFunc(RegisterHandler)))
+	//http.Handle("/registerPage", middleware(http.HandlerFunc(RegisterHandler)))
 	http.Handle("/upload", middleware(http.HandlerFunc(UploadHandler)))
 	http.Handle("/message", middleware(http.HandlerFunc(MessageHandler)))
 	http.Handle("/logout",middleware(http.HandlerFunc(LogoutHandler)))
