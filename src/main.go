@@ -29,7 +29,7 @@ var (
 )
 
 func init() {
-	tpl = template.Must(template.ParseGlob("templates/*.html"))
+	tpl = template.Must(template.ParseGlob("./templates/*.html"))
 }
 
 type Page struct {
@@ -104,27 +104,29 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 		page = &Page{Title: pageName}
 	}
 	page.Title = pageName
-	page.Data=memb.TargetMembers
+	page.Data = memb.TargetMembers
 	RenderTemplate(w, file, page)
-}	
-type BulkMessage struct{
-		Numbers []interface{} `bson:"Numbers"`
-		District string `bson:"District"`
-		Title string	`bson:"Title"`
-		Message string `bson:"Message"`
 }
+
+type BulkMessage struct {
+	Numbers  []interface{} `bson:"Numbers"`
+	District string        `bson:"District"`
+	Title    string        `bson:"Title"`
+	Message  string        `bson:"Message"`
+}
+
 func MessageHandler(w http.ResponseWriter, r *http.Request) {
-	bulk:=BulkMessage{}
+	bulk := BulkMessage{}
 	err := json.NewDecoder(r.Body).Decode(&bulk)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	ch:=make (chan *http.Response)
-	go sendasync(bulk,ch)
-	resp:=<-ch
+	ch := make(chan *http.Response)
+	go sendasync(bulk, ch)
+	resp := <-ch
 	defer resp.Body.Close()
-	bytes,err:=ioutil.ReadAll(resp.Body)
+	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -132,30 +134,30 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewEncoder(w).Encode(bytes)
 }
-func sendasync(bulk BulkMessage,rc chan * http.Response)( error) {
-	jdata:=url.Values{}
-	jdata.Set("username",os.Getenv("USERNAME"))
-	recp:=bulk.Numbers[0].(string)
-	for i:=1;i<len(bulk.Numbers);i++{
-		recp+=","
-		recp+=bulk.Numbers[i].(string)
+func sendasync(bulk BulkMessage, rc chan *http.Response) error {
+	jdata := url.Values{}
+	jdata.Set("username", os.Getenv("USERNAME"))
+	recp := bulk.Numbers[0].(string)
+	for i := 1; i < len(bulk.Numbers); i++ {
+		recp += ","
+		recp += bulk.Numbers[i].(string)
 	}
-	jdata.Set("to",recp)
-	jdata.Set("message",bulk.Message)
-	jdata.Set("from",os.Getenv("FROM"))
+	jdata.Set("to", recp)
+	jdata.Set("message", bulk.Message)
+	jdata.Set("from", os.Getenv("FROM"))
 
-	res,err:=http.NewRequest(http.MethodPost,os.Getenv("APIURL"),strings.NewReader(jdata.Encode()))
-	if err!=nil{
+	res, err := http.NewRequest(http.MethodPost, os.Getenv("APIURL"), strings.NewReader(jdata.Encode()))
+	if err != nil {
 		return err
 	}
-	res.Header.Add("Accept"," Application/json")
+	res.Header.Add("Accept", " Application/json")
 	res.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	res.Header.Add("apiKey", os.Getenv("APIKEY"))
 
-	client:=&http.Client{}
-	resp,err:=client.Do(res)
-	if err ==nil{
-		rc<-resp
+	client := &http.Client{}
+	resp, err := client.Do(res)
+	if err == nil {
+		rc <- resp
 	}
 	return err
 }
@@ -168,11 +170,11 @@ func MessagePageHandler(w http.ResponseWriter, r *http.Request) {
 		page = &Page{Title: pageName}
 	}
 	page.Title = pageName
-	page.Data=memb.TargetMembers
+	page.Data = memb.TargetMembers
 	RenderTemplate(w, file, page)
 }
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	cok,_ := r.Cookie(os.Getenv("AuthCookieName"))
+	cok, _ := r.Cookie(os.Getenv("AuthCookieName"))
 	auth.DeleteSessionByID(cok.Value)
 	http.SetCookie(w, &http.Cookie{
 		Name:     os.Getenv("AuthCookieName"),
@@ -182,15 +184,15 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteStrictMode,
 	})
 }
-func UploadHandler(w http.ResponseWriter,r *http.Request){
-	err:=r.ParseMultipartForm(10<<20)
-	if err!=nil{
+func UploadHandler(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil {
 		res := struct{ Error string }{Error: err.Error()}
 		json.NewEncoder(w).Encode(res)
 		return
 	}
-	file,handler,err:=r.FormFile("Passport")
-	if err!=nil{
+	file, handler, err := r.FormFile("Passport")
+	if err != nil {
 		res := struct{ Error string }{Error: err.Error()}
 		json.NewEncoder(w).Encode(res)
 		return
@@ -201,22 +203,23 @@ func UploadHandler(w http.ResponseWriter,r *http.Request){
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}*/
-	path:=fmt.Sprintf("/tmp/data/assets/images/%d%s",time.Now().UnixNano(), handler.Filename)
-	tmp,err:=os.Create(path)
-	if err!=nil{
+	dir:="./assets/images/"
+	path := fmt.Sprintf("%d%s", time.Now().Unix(), handler.Filename)
+	tmp, err := os.Create(dir+path)
+	if err != nil {
 		res := struct{ Error string }{Error: err.Error()}
 		json.NewEncoder(w).Encode(res)
 		return
 	}
 	defer tmp.Close()
-	filebyte,err:=ioutil.ReadAll(file)
-	if err!=nil{
+	filebyte, err := ioutil.ReadAll(file)
+	if err != nil {
 		res := struct{ Error string }{Error: err.Error()}
 		json.NewEncoder(w).Encode(res)
 		return
 	}
 	tmp.Write(filebyte)
-	json.NewEncoder(w).Encode(struct{Path string}{Path:path[1:]})
+	json.NewEncoder(w).Encode(struct{ Path string }{Path: "/assets/images/"+path})
 }
 
 func middleware(next http.Handler) http.Handler {
@@ -231,7 +234,7 @@ func middleware(next http.Handler) http.Handler {
 		}
 		if r.URL.Path == "/login" {
 		} else if r.URL.Path == "/loginPage" {
-		}else if r.URL.Path=="/registerPage"{
+		} else if r.URL.Path == "/registerPage" {
 		} else {
 			cok, err := r.Cookie(os.Getenv("AuthCookieName"))
 			if err != nil {
@@ -263,15 +266,15 @@ func main() {
 		log.Fatal(err)
 	}
 	defer client.Disconnect(ctx)
-	p,err:=os.Getwd()
-	if err==nil{
+	p, err := os.Getwd()
+	if err == nil {
 		fmt.Println(p)
 	}
-	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("/tmp/assets"))))
+	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets"))))
 
 	users := users.NewUsers(auth, client)
-	http.Handle("/users",middleware( http.HandlerFunc(users.ServeHTTP)))
-	http.Handle("/users/",middleware( http.HandlerFunc(users.ServeHTTP)))
+	http.Handle("/users", middleware(http.HandlerFunc(users.ServeHTTP)))
+	http.Handle("/users/", middleware(http.HandlerFunc(users.ServeHTTP)))
 	http.Handle("/login", middleware(http.HandlerFunc(users.ServeHTTP)))
 
 	memb = members.NewMembers(client)
@@ -285,7 +288,7 @@ func main() {
 	//http.Handle("/registerPage", middleware(http.HandlerFunc(RegisterHandler)))
 	http.Handle("/upload", middleware(http.HandlerFunc(UploadHandler)))
 	http.Handle("/message", middleware(http.HandlerFunc(MessageHandler)))
-	http.Handle("/logout",middleware(http.HandlerFunc(LogoutHandler)))
+	http.Handle("/logout", middleware(http.HandlerFunc(LogoutHandler)))
 
 	http.Handle("/", http.RedirectHandler("/index", http.StatusSeeOther))
 

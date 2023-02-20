@@ -9,6 +9,8 @@ services:
       - bulkdb 
     networks:
       - bulk
+    volumes:
+      - ./data1:/usr/src/app/assets/images/
       
   bulkdb:
     container_name: bulkdb
