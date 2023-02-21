@@ -185,27 +185,21 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 func UploadHandler(w http.ResponseWriter, r *http.Request) {
+	
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
 		res := struct{ Error string }{Error: err.Error()}
 		json.NewEncoder(w).Encode(res)
 		return
 	}
-	file, handler, err := r.FormFile("Passport")
+	file, _, err := r.FormFile("Passport")
 	if err != nil {
 		res := struct{ Error string }{Error: err.Error()}
 		json.NewEncoder(w).Encode(res)
 		return
 	}
 	defer file.Close()
-	/*err=os.Mkdir("./assets/images",os.ModePerm)
-	if err!=nil{
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}*/
-	dir:="./assets/images/"
-	path := fmt.Sprintf("%d%s", time.Now().Unix(), handler.Filename)
-	tmp, err := os.Create(dir+path)
+	tmp, err :=  ioutil.TempFile("./assets/images", "upload-*.png")
 	if err != nil {
 		res := struct{ Error string }{Error: err.Error()}
 		json.NewEncoder(w).Encode(res)
@@ -219,7 +213,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tmp.Write(filebyte)
-	json.NewEncoder(w).Encode(struct{ Path string }{Path: "/assets/images/"+path})
+	json.NewEncoder(w).Encode(struct{ Path string }{Path: tmp.Name()})
 }
 
 func middleware(next http.Handler) http.Handler {

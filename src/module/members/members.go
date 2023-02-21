@@ -224,6 +224,7 @@ func (members *Members) UpdateMember(memb Member) (*Member, error) {
 					"PhoneNumber": memb.PhoneNumber,
 					"Email":memb.Email,
 					"District":memb.District,
+					"Passport":memb.Passport,
 				}})
 			if err != nil {
 				return &Member{}, err
