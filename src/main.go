@@ -137,11 +137,21 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 func sendasync(bulk BulkMessage, rc chan *http.Response) error {
 	jdata := url.Values{}
 	jdata.Set("username", os.Getenv("USERNAME"))
-	recp := bulk.Numbers[0].(string)
-	for i := 1; i < len(bulk.Numbers); i++ {
+	recp := ""
+	for i := 0; i < len(bulk.Numbers); i++ {
+		if i==0{
+			recp += bulk.Numbers[i].(string)
+			break
+		}
 		recp += ","
 		recp += bulk.Numbers[i].(string)
 	}
+	for i,u := range memb.TargetMembers{
+		if string(u.District)==bulk.District && !strings.Contains(recp,string(u.PhoneNumber)){
+			recp += ","
+			recp += bulk.Numbers[i].(string)
+		}
+	}	
 	jdata.Set("to", recp)
 	jdata.Set("message", bulk.Message)
 	jdata.Set("from", os.Getenv("FROM"))
