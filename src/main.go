@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -123,7 +124,39 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ch := make(chan *http.Response)
-	go sendasync(bulk, ch)
+	recp := ""
+	for i := 0; i < len(bulk.Numbers); i++ {
+		if recp=="" {
+			recp += bulk.Numbers[i].(string)
+		}else{
+			recp += ","
+			recp += bulk.Numbers[i].(string)
+		}
+	}
+	if bulk.District!=""{
+		n, err := strconv.ParseInt(bulk.District, 10, 64)
+		if err != nil {
+			res := struct{ Error string }{Error: err.Error()}
+			json.NewEncoder(w).Encode(res)
+			return
+		}
+		for _,u := range memb.TargetMembers{
+			if u.District==uint(n) && !strings.Contains(recp,u.PhoneNumber){
+				if recp=="" {
+					recp += u.PhoneNumber
+				}else{
+					recp += ","
+					recp += u.PhoneNumber
+				}
+			}
+		}
+	}
+	if recp=="" {
+		res := struct{ Error string }{Error: "No Recipients for the message"}
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+	go sendasync(bulk.Message,recp, ch)
 	resp := <-ch
 	defer resp.Body.Close()
 	bytes, err := ioutil.ReadAll(resp.Body)
@@ -134,28 +167,12 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewEncoder(w).Encode(bytes)
 }
-func sendasync(bulk BulkMessage, rc chan *http.Response) error {
+func sendasync(message string,to string, rc chan *http.Response) error {
 	jdata := url.Values{}
-	jdata.Set("username", os.Getenv("USERNAME"))
-	recp := ""
-	for i := 0; i < len(bulk.Numbers); i++ {
-		if i==0{
-			recp += bulk.Numbers[i].(string)
-			break
-		}
-		recp += ","
-		recp += bulk.Numbers[i].(string)
-	}
-	for i,u := range memb.TargetMembers{
-		if string(u.District)==bulk.District && !strings.Contains(recp,string(u.PhoneNumber)){
-			recp += ","
-			recp += bulk.Numbers[i].(string)
-		}
-	}	
-	jdata.Set("to", recp)
-	jdata.Set("message", bulk.Message)
+	jdata.Set("username", os.Getenv("USERNAME"))		
+	jdata.Set("to", to)
+	jdata.Set("message", message)
 	jdata.Set("from", os.Getenv("FROM"))
-
 	res, err := http.NewRequest(http.MethodPost, os.Getenv("APIURL"), strings.NewReader(jdata.Encode()))
 	if err != nil {
 		return err
@@ -270,10 +287,10 @@ func main() {
 		log.Fatal(err)
 	}
 	defer client.Disconnect(ctx)
-	p, err := os.Getwd()
+	/*p, err := os.Getwd()
 	if err == nil {
 		fmt.Println(p)
-	}
+	}*/
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets"))))
 
 	users := users.NewUsers(auth, client)
