@@ -14,11 +14,11 @@ import (
 	"text/template"
 	"time"
 
+	"example.com/districts"
+	"example.com/groups"
 	"example.com/members"
 	"example.com/session"
 	"example.com/users"
-	"example.com/groups"
-	"example.com/districts"
 
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -30,8 +30,8 @@ var (
 	auth   = session.NewSessionManager()
 	client *mongo.Client
 	memb   *members.Members
-	group *groups.Groups
-	dist *districts.Districts
+	group  *groups.Groups
+	dist   *districts.Districts
 )
 
 func init() {
@@ -73,7 +73,14 @@ func MemberHandler(w http.ResponseWriter, r *http.Request) {
 		page = &Page{Title: pageName}
 	}
 	page.Title = pageName
-	page.Data = memb.TargetMembers
+	d := struct {
+		Members   []*members.Member
+		Groups    []*groups.Group
+		Districts []*districts.District
+	}{Members: memb.TargetMembers,
+		Groups:    group.TargetGroups,
+		Districts: dist.TargetDistricts}
+	page.Data = d
 	RenderTemplate(w, file, page)
 }
 
@@ -110,7 +117,14 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 		page = &Page{Title: pageName}
 	}
 	page.Title = pageName
-	page.Data = memb.TargetMembers
+	d := struct {
+		Members   []*members.Member
+		Groups    []*groups.Group
+		Districts []*districts.District
+	}{Members: memb.TargetMembers,
+		Groups:    group.TargetGroups,
+		Districts: dist.TargetDistricts}
+	page.Data = d
 	RenderTemplate(w, file, page)
 }
 
@@ -131,37 +145,37 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	ch := make(chan *http.Response)
 	recp := ""
 	for i := 0; i < len(bulk.Numbers); i++ {
-		if recp=="" {
+		if recp == "" {
 			recp += bulk.Numbers[i].(string)
-		}else{
+		} else {
 			recp += ","
 			recp += bulk.Numbers[i].(string)
 		}
 	}
-	if bulk.District!=""{
+	if bulk.District != "" {
 		n, err := strconv.ParseInt(bulk.District, 10, 64)
 		if err != nil {
 			res := struct{ Error string }{Error: err.Error()}
 			json.NewEncoder(w).Encode(res)
 			return
 		}
-		for _,u := range memb.TargetMembers{
-			if u.District==uint(n) && !strings.Contains(recp,u.PhoneNumber){
-				if recp=="" {
+		for _, u := range memb.TargetMembers {
+			if u.District == uint(n) && !strings.Contains(recp, u.PhoneNumber) {
+				if recp == "" {
 					recp += u.PhoneNumber
-				}else{
+				} else {
 					recp += ","
 					recp += u.PhoneNumber
 				}
 			}
 		}
 	}
-	if recp=="" {
+	if recp == "" {
 		res := struct{ Error string }{Error: "No Recipients for the message"}
 		json.NewEncoder(w).Encode(res)
 		return
 	}
-	go sendasync(bulk.Message,recp, ch)
+	go sendasync(bulk.Message, recp, ch)
 	resp := <-ch
 	defer resp.Body.Close()
 	bytes, err := ioutil.ReadAll(resp.Body)
@@ -172,9 +186,9 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewEncoder(w).Encode(bytes)
 }
-func sendasync(message string,to string, rc chan *http.Response) error {
+func sendasync(message string, to string, rc chan *http.Response) error {
 	jdata := url.Values{}
-	jdata.Set("username", os.Getenv("USERNAME"))		
+	jdata.Set("username", os.Getenv("USERNAME"))
 	jdata.Set("to", to)
 	jdata.Set("message", message)
 	jdata.Set("from", os.Getenv("FROM"))
@@ -192,6 +206,30 @@ func sendasync(message string,to string, rc chan *http.Response) error {
 		rc <- resp
 	}
 	return err
+}
+func DistrictPageHandler(w http.ResponseWriter, r *http.Request) {
+	file := "district.html"
+	filePath := "templates/" + file
+	pageName := "District Page"
+	page, err := LoadPage(filePath)
+	if err != nil {
+		page = &Page{Title: pageName}
+	}
+	page.Title = pageName
+	page.Data = dist.TargetDistricts
+	RenderTemplate(w, file, page)
+}
+func GroupPageHandler(w http.ResponseWriter, r *http.Request) {
+	file := "group.html"
+	filePath := "templates/" + file
+	pageName := "Group Page"
+	page, err := LoadPage(filePath)
+	if err != nil {
+		page = &Page{Title: pageName}
+	}
+	page.Title = pageName
+	page.Data = group.TargetGroups
+	RenderTemplate(w, file, page)
 }
 func MessagePageHandler(w http.ResponseWriter, r *http.Request) {
 	file := "message.html"
@@ -217,7 +255,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 func UploadHandler(w http.ResponseWriter, r *http.Request) {
-	
+
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
 		res := struct{ Error string }{Error: err.Error()}
@@ -231,7 +269,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
-	tmp, err :=  ioutil.TempFile("./assets/images", "upload-*.png")
+	tmp, err := ioutil.TempFile("./assets/images", "upload-*.png")
 	if err != nil {
 		res := struct{ Error string }{Error: err.Error()}
 		json.NewEncoder(w).Encode(res)
@@ -318,6 +356,8 @@ func main() {
 	http.Handle("/membersPage", middleware(http.HandlerFunc(MemberHandler)))
 	http.Handle("/loginPage", middleware(http.HandlerFunc(LoginHandler)))
 	http.Handle("/messagesPage", middleware(http.HandlerFunc(MessagePageHandler)))
+	http.Handle("/groupsPage", middleware(http.HandlerFunc(GroupPageHandler)))
+	http.Handle("/districtsPage", middleware(http.HandlerFunc(DistrictPageHandler)))
 	http.Handle("/index", middleware(http.HandlerFunc(IndexHandler)))
 	//http.Handle("/registerPage", middleware(http.HandlerFunc(RegisterHandler)))
 	http.Handle("/upload", middleware(http.HandlerFunc(UploadHandler)))

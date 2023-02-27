@@ -5,23 +5,15 @@
     <div class="row">
         <div class="col-9">
             <div class="row row-cols-1 row-cols-md-5 g-4">
-                {{range $i:=.Data.Members}} 
+                {{range $i:=.Data}} 
                 <div class="col">
                     <div class="card">
-                        <img class="card-img-top" src={{$i.Passport}}>
+                        <img class="card-img-top" src={{$i.Logo}}>
                       
                         <div class="card-body">
                             <h5 class="card-title">{{$i.ID}} : {{$i.Name}}</h5>
                             <p class="card-body">
-                                Gender: {{$i.Gender}}
-                                <br>
-                                Date of Birth: {{$i.DateofBirth}}
-                                <br>
-                                Phone Number: {{$i.PhoneNumber}}
-                                <br>
-                                Email: {{$i.Email}}
-                                <br>
-                                District: {{$i.District}}
+                                {{$i.Description}}                               
                             </p>
                         </div>
                     </div>
@@ -32,14 +24,14 @@
         <div class="col-3">
             <div class="card" style="width: 18rem;">              
                 <div class="card-body">
-                    <h5 class="card-title">Member Management</h5>
+                    <h5 class="card-title">Group Management</h5>
                     <form  onsubmit="submitForm(event.submitter.value)" id="memberform" > 
                         <div class="row g-3">
                             <div class="col-md-4">
-                                <label for="mid">Member ID</label>
+                                <label for="did">Group ID</label>
                             </div>
                             <div class="col-md-4">                                
-                                <input type="number" class="form-control" min="0" id="mid" >
+                                <input type="number" class="form-control" min="0" id="did" >
                             </div>
                             <div class="col-md-2">                                            
                                 <button type="submit" value="search" id="search" class="btn btn-info">Search</button>
@@ -47,66 +39,16 @@
                         </div>
                         <br>
                         <div class="form-group"  style="margin:auto">
-                            <img id="pass" src="/assets/default_image.png" style="height:75px;width:75px"  />
-                            <input type="file" id="passfile" accept="image/*">
+                            <img id="dlp" src="/assets/default_group.png" style="height:75px;width:75px"  />
+                            <input type="file" id="dl" accept="image/*">
                         </div>
                         <div class="form-group">
                             <label for="mn">Name</label>
-                            <input type="text" class="form-control" id="mn">
-                        </div>
+                            <input type="text" class="form-control" id="dn">
+                        </div>                       
                         <div class="form-group">
-                            <label for="mg">Gender</label>
-                            <select type="text" class="form-select" id="mg">
-                                <option selected></option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="md">Date of Birth</label>
-                            <input type="date" class="form-control" id="md" >
-                        </div>
-                        <div class="form-group">
-                            <label for="mpn">Phone Number</label>
-                            <input type="tel" class="form-control" id="mpn" pattern="[0-9]{10}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="me" >Email</label>
-                            <input type="email" class="form-control" id="me" >
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="mdi" >District</label>
-                            <select type="number" class="form-select" id="mdi">
-                                <option selected></option>                                
-                                {{range $i:=.Data.Districts}}
-                                    <script>
-                                        var opt=document.createElement('option')
-                                        opt.value="{{$i.ID}}"
-                                        opt.id="district"+"{{$i.ID}}"
-                                        opt.innerHTML="{{$i.Name}}"
-                                        document.getElementById('mdi').append(opt)
-                                    </script>
-                                {{end}}
-                            </select>
-                        </div>
-                        <div class="form-group" id="g" style="overflow:scroll;width:100%;height:100px">                            
-                            {{range $i:=.Data.Groups}}
-                                <script>
-                                    var dv=document.getElementById('g')
-                                    var checkbox = document.createElement('input');
-                                        checkbox.type = "checkbox";
-                                        checkbox.name = "{{$i.Name}}"
-                                        checkbox.value = "{{$i.ID}}";
-                                        checkbox.id="group"+"{{$i.ID}}"
-                                    var label = document.createElement('label');
-                                        label.htmlFor="group"+"{{$i.ID}}"
-                                    label.appendChild(document.createTextNode( "{{$i.Name}}"))
-                                    var br = document.createElement('br');
-                                    dv.appendChild(checkbox)
-                                    dv.appendChild(label)
-                                    dv.appendChild(br)
-                                </script>
-                            {{end}}
+                            <label for="dd" class="form-label">Description</label>
+                            <textarea type="text" class="form-control" id="dd" row="5" ></textarea>
                         </div>
                         <br>
                         <div class="row g-3">
@@ -132,29 +74,11 @@
 {{template "footer"}}
 <script>
     let y=document.getElementById('errorDiv')
-    let id=document.getElementById('mid')
-    let name=document.getElementById('mn')
-    let date=document.getElementById('md')
-    let gender=document.getElementById('mg')
-    let number=document.getElementById('mpn')
-    let form=document.getElementById('memberform')
-    let email=document.getElementById('me')
-    let district=document.getElementById('mdi')
-    let pas=document.getElementById('pass')
-    let pasf=document.getElementById('passfile')
-    let group=document.getElementById('mdg')
-
-    window.onload = (event) => {
-
-        var checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.name = 'interest';
-            checkbox.value = 'car';
-        var label = document.createElement('label')
-            label.htmlFor = 'car';
-            label.appendChild(document.createTextNode('Car'));
-    }
-
+    let id=document.getElementById('did')
+    let name=document.getElementById('dn')
+    let detail=document.getElementById('dd')
+    let logo=document.getElementById('dlp')
+    let pasf=document.getElementById('dl')
     pasf.addEventListener('change',e=>{ 
         const data= new FormData()
         data.append('Passport',e.target.files[0])
@@ -174,7 +98,7 @@
             }else{
                 y.classList.add("alter-success")
                 y.innerHTML="Passport successfully updated" 
-                pas.src=d['Path']
+                logo.src=d['Path']
             }}
 
         ).catch((e)=>{
@@ -186,11 +110,10 @@
     function submitForm(type){       
         event.preventDefault()
         event.stopPropagation()
-        console.log(type)
         switch(type){
                 case "add":{
-                    let data=JSON.stringify({"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value,"Passport":pas.src,"Email":email.value,"District":district.value})
-                    fetch('http://127.0.0.1:8080/members',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
+                    let data=JSON.stringify({"Name":name.value,"Logo":logo.src,"Description":detail.value})
+                    fetch('http://127.0.0.1:8080/groups',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
                         (result)=>{                    
                             if (!result.ok){                    
                                 throw new Error(result.statusText);
@@ -204,15 +127,11 @@
                                        
                                 }else{
                                     y.classList.add("alter-success")
-                                    y.innerHTML="New Member successfully added"   
+                                    y.innerHTML="New Group successfully added"   
                                     id.value=d["ID"] 
                                     name.value=d["Name"] 
-                                    date.value=d["DateofBirth"]  
-                                    gender.value=d["Gender"]  
-                                    number.value=d["PhoneNumber"]  
-                                    email.value=d["Email"]
-                                    district.value=d["District"]
-                                    pas.src=d["Passport"]
+                                    detail.value=d["Description"]
+                                    logo.src=d["Logo"]
                                 }                
                             }).catch((e)=>{
                             y.classList.add("alter-danger")
@@ -221,8 +140,8 @@
                     break
                 }
                 case "update":{
-                    let data=JSON.stringify({"Passport":pas.src,"ID":id.value,"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value,"Email":email.value,"District":district.value})
-                    fetch('http://127.0.0.1:8080/members',{ method:'PUT',headers:{'Content-Type':'application/json'},credentials:"include",body:data}).then(
+                    let data=JSON.stringify({"Name":name.value,"Logo":logo.src,"Description":detail.value})
+                    fetch('http://127.0.0.1:8080/groups',{ method:'PUT',headers:{'Content-Type':'application/json'},credentials:"include",body:data}).then(
                         (result)=>{                    
                             if (!result.ok){                    
                                 throw new Error(result.statusText);
@@ -236,15 +155,11 @@
                                    
                                 }else{
                                     y.classList.add("alter-success")
-                                    y.innerHTML="Member successfully updated"   
+                                    y.innerHTML="Group successfully updated"   
                                     id.value=d["ID"] 
                                     name.value=d["Name"] 
-                                    date.value=d["DateofBirth"]  
-                                    gender.value=d["Gender"]  
-                                    number.value=d["PhoneNumber"]  
-                                    email.value=d["Email"]
-                                    district.value=d["District"]
-                                    pas.src=d["Passport"]
+                                    detail.value=d["Description"]
+                                    logo.src=d["Logo"]
                                 }                             
                             }).catch((e)=>{
                                 y.classList.add("alter-danger")
@@ -254,7 +169,7 @@
                     break
                 }
                 case "delete":{
-                    fetch('http://127.0.0.1:8080/members/'+id.value,{ method:'DELETE',headers:{'Content-Type':'application/json'},credentials:"include"}).then(
+                    fetch('http://127.0.0.1:8080/groups/'+id.value,{ method:'DELETE',headers:{'Content-Type':'application/json'},credentials:"include"}).then(
                     (result)=>{                    
                         if (!result.ok){                    
                             throw new Error(result.statusText);
@@ -268,15 +183,11 @@
                                    
                                 }else{
                                     y.classList.add("alter-success")
-                                    y.innerHTML="Member successfully deleted"   
+                                    y.innerHTML="Group successfully deleted"   
                                     id.value=d["ID"] 
                                     name.value=d["Name"] 
-                                    date.value=d["DateofBirth"]  
-                                    gender.value=d["Gender"]  
-                                    number.value=d["PhoneNumber"] 
-                                    email.value=d["Email"]
-                                    district.value=d["District"] 
-                                    pas.src=d["Passport"]
+                                    detail.value=d["Description"]
+                                    logo.src=d["Logo"]
                                 }                                  
                         }).catch((e)=>{
                             y.classList.add("alter-danger")
@@ -285,7 +196,7 @@
                     break
                 }
                 case "search":{
-                    fetch('http://127.0.0.1:8080/members/'+id.value,{ method:'GET',headers:{'Content-Type':'application/json'},credentials:"include"}).then(
+                    fetch('http://127.0.0.1:8080/groups/'+id.value,{ method:'GET',headers:{'Content-Type':'application/json'},credentials:"include"}).then(
                     (result)=>{                    
                         if (!result.ok){                    
                             throw new Error(result.statusText);
@@ -299,15 +210,11 @@
                                    
                                 }else{
                                     y.classList.add("alter-success")
-                                    y.innerHTML="Member was found"   
+                                    y.innerHTML="Group was found"   
                                     id.value=d["ID"] 
                                     name.value=d["Name"] 
-                                    date.value=d["DateofBirth"]  
-                                    gender.value=d["Gender"]  
-                                    number.value=d["PhoneNumber"]  
-                                    email.value=d["Email"]
-                                    district.value=d["District"]
-                                    pas.src=d["Passport"]
+                                    detail.value=d["Description"]
+                                    logo.src=d["Logo"]
                                 }                 
                             }).catch((e)=>{
                                 y.classList.add("alter-danger")

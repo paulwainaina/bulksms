@@ -2,13 +2,39 @@
     <title>{{.Title}}</title>
 {{template "body"}} 
 <div class="container-fluid">
-    <div class="card"style="width: 18rem;">
-        <div class="card-body">
-            <h5 class="card-title">Number of registered members</h5>
-            <p class="card-body">
-                Number: {{len .Data}}  
-              
-            </p>
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        <div class="col">
+            <div class="card"style="width: 18rem;">
+                <div class="card-body">
+                    <h5 class="card-title">Number of registered members</h5>
+                    <p class="card-body">
+                        Number: {{len .Data.Members}}  
+                    
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card"style="width: 18rem;">
+                <div class="card-body">
+                    <h5 class="card-title">Number of registered groups</h5>
+                    <p class="card-body">
+                        Number: {{len .Data.Groups}}  
+                    
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card"style="width: 18rem;">
+                <div class="card-body">
+                    <h5 class="card-title">Number of registered districts</h5>
+                    <p class="card-body">
+                        Number: {{len .Data.Districts}}  
+                    
+                    </p>
+                </div>
+            </div>
         </div>
     </div>
 </div>
