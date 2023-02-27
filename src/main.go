@@ -17,6 +17,9 @@ import (
 	"example.com/members"
 	"example.com/session"
 	"example.com/users"
+	"example.com/groups"
+	"example.com/districts"
+
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -27,6 +30,8 @@ var (
 	auth   = session.NewSessionManager()
 	client *mongo.Client
 	memb   *members.Members
+	group *groups.Groups
+	dist *districts.Districts
 )
 
 func init() {
@@ -301,6 +306,14 @@ func main() {
 	memb = members.NewMembers(client)
 	http.Handle("/members", middleware(http.HandlerFunc(memb.ServeHTTP)))
 	http.Handle("/members/", middleware(http.HandlerFunc(memb.ServeHTTP)))
+
+	group = groups.NewGroups(client)
+	http.Handle("/groups", middleware(http.HandlerFunc(group.ServeHTTP)))
+	http.Handle("/groups/", middleware(http.HandlerFunc(group.ServeHTTP)))
+
+	dist = districts.NewDistricts(client)
+	http.Handle("/districts", middleware(http.HandlerFunc(dist.ServeHTTP)))
+	http.Handle("/districts/", middleware(http.HandlerFunc(dist.ServeHTTP)))
 
 	http.Handle("/membersPage", middleware(http.HandlerFunc(MemberHandler)))
 	http.Handle("/loginPage", middleware(http.HandlerFunc(LoginHandler)))

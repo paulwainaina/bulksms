@@ -3,12 +3,16 @@ module example.com/bulksms
 go 1.19
 
 replace (
+	example.com/districts => ./module/districts
+	example.com/groups => ./module/groups
 	example.com/members => ./module/members
 	example.com/session => ./module/session
 	example.com/users => ./module/users
 )
 
 require (
+	example.com/districts v0.0.0-00010101000000-000000000000
+	example.com/groups v0.0.0-00010101000000-000000000000
 	example.com/members v0.0.0-00010101000000-000000000000
 	example.com/session v0.0.0-00010101000000-000000000000
 	example.com/users v0.0.0-00010101000000-000000000000
