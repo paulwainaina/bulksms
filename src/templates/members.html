@@ -3,25 +3,26 @@
 {{template "body"}} 
 <div class="container-fluid">
     <div class="row">
-        <div class="col-9">
-            <div class="row row-cols-1 row-cols-md-5 g-4">
+        <div class="col-8">
+            <div class="row row-cols-1 row-cols-md-4 g-4">
                 {{range $i:=.Data.Members}} 
                 <div class="col">
-                    <div class="card">
-                        <img class="card-img-top" src={{$i.Passport}}>
-                      
+                    <div class="card h-100">
+                        <img class="card-img-top" src={{$i.Passport}} style="border-radius:20%;width:150px;height:150px;">                      
                         <div class="card-body">
-                            <h5 class="card-title">{{$i.ID}} : {{$i.Name}}</h5>
+                            <h5 class="card-title">{{$i.ID}}: {{$i.Name}}</h5>
                             <p class="card-body">
-                                Gender: {{$i.Gender}}
+                                <b>Gender</b>:{{$i.Gender}}
                                 <br>
-                                Date of Birth: {{$i.DateofBirth}}
+                                <b>DoB</b>:{{$i.DateofBirth}}
                                 <br>
-                                Phone Number: {{$i.PhoneNumber}}
+                                <b>Number</b>:{{$i.PhoneNumber}}
                                 <br>
-                                Email: {{$i.Email}}
+                                <b>Email</b>:{{$i.Email}}
                                 <br>
-                                District: {{$i.District}}
+                                <b>District</b>:{{$i.District}}
+
+ 
                             </p>
                         </div>
                     </div>
@@ -29,87 +30,88 @@
                 {{end}}
             </div>
         </div>        
-        <div class="col-3">
-            <div class="card" style="width: 18rem;">              
+        <div class="col-4">
+            <div class="card" >              
                 <div class="card-body">
                     <h5 class="card-title">Member Management</h5>
                     <form  onsubmit="submitForm(event.submitter.value)" id="memberform" > 
                         <div class="row g-3">
-                            <div class="col-md-4">
-                                <label for="mid">Member ID</label>
+                            <div class="col-md-4">                               
+                                <input type="number" class="form-control" placeholder="Member ID" min="0" id="mid" >
                             </div>
-                            <div class="col-md-4">                                
-                                <input type="number" class="form-control" min="0" id="mid" >
-                            </div>
-                            <div class="col-md-2">                                            
+                            <div class="col-md-3">                                          
                                 <button type="submit" value="search" id="search" class="btn btn-info">Search</button>
                             </div> 
                         </div>
-                        <br>
-                        <div class="form-group"  style="margin:auto">
-                            <img id="pass" src="/assets/default_image.png" style="height:75px;width:75px"  />
+                        <div class="form-group">
+                            <img id="pass" src="/assets/default_image.png"  style="padding: 10px;border-radius:20%;height:150px;display:block;margin-left: auto;margin-right: auto;"  />
+                            <label for="passfile">Member Passport</label>
                             <input type="file" id="passfile" accept="image/*">
                         </div>
                         <div class="form-group">
                             <label for="mn">Name</label>
                             <input type="text" class="form-control" id="mn">
                         </div>
-                        <div class="form-group">
-                            <label for="mg">Gender</label>
-                            <select type="text" class="form-select" id="mg">
-                                <option selected></option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="md">Date of Birth</label>
-                            <input type="date" class="form-control" id="md" >
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label for="mg">Gender</label>
+                                <select type="text" class="form-select" id="mg">
+                                    <option selected></option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="md">Date of Birth</label>
+                                <input type="date" class="form-control" id="md" >
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="mpn">Phone Number</label>
-                            <input type="tel" class="form-control" id="mpn" pattern="[0-9]{10}">
+                            <input type="tel" class="form-control" id="mpn" pattern="[0-9]{10}" >
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="me" >Email</label>
                             <input type="email" class="form-control" id="me" >
                         </div>
-                        <div class="form-group">
-                            <label class="form-label" for="mdi" >District</label>
-                            <select class="form-select" id="mdi">
-                                <option selected></option>                                
-                                {{range $i:=.Data.Districts}}
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label" for="mdi" >District</label>
+                                <select class="form-select" id="mdi">
+                                    <option selected></option>                                
+                                    {{range $i:=.Data.Districts}}
+                                        <script>
+                                            var opt=document.createElement('option')
+                                            opt.value="{{$i.ID}}"
+                                            opt.id="district"+"{{$i.ID}}"
+                                            opt.innerHTML="{{$i.Name}}"
+                                            document.getElementById('mdi').append(opt)
+                                        </script>
+                                    {{end}}
+                                </select>
+                            </div>
+                            <div class="col-md-6" id="fg" >  
+                                <label class="form-label" for="fg">Groups</label>
+                                <br>
+                                {{range $i:=.Data.Groups}}
                                     <script>
-                                        var opt=document.createElement('option')
-                                        opt.value="{{$i.ID}}"
-                                        opt.id="district"+"{{$i.ID}}"
-                                        opt.innerHTML="{{$i.Name}}"
-                                        document.getElementById('mdi').append(opt)
+                                        var dv=document.getElementById('fg')
+                                        var checkbox = document.createElement('input');
+                                        checkbox.type = "checkbox";
+                                        checkbox.name = "{{$i.Name}}"
+                                        checkbox.value = "{{$i.ID}}";
+                                        checkbox.id="group"+"{{$i.ID}}"
+                                        var label = document.createElement('label');
+                                            label.htmlFor="group"+"{{$i.ID}}"
+                                            label.className="form-label"
+                                            label.appendChild(document.createTextNode( "{{$i.Name}}"))
+                                        var br = document.createElement('br');
+                                            dv.appendChild(checkbox)
+                                            dv.appendChild(label)
+                                            dv.appendChild(br)
                                     </script>
                                 {{end}}
-                            </select>
-                        </div>
-                        <div class="form-group" id="fg" >  
-                            <label class="form-label" for="fg">Groups</label>
-                            <br>
-                            {{range $i:=.Data.Groups}}
-                                <script>
-                                    var dv=document.getElementById('fg')
-                                    var checkbox = document.createElement('input');
-                                      checkbox.type = "checkbox";
-                                      checkbox.name = "{{$i.Name}}"
-                                      checkbox.value = "{{$i.ID}}";
-                                      checkbox.id="group"+"{{$i.ID}}"
-                                    var label = document.createElement('label');
-                                        label.htmlFor="group"+"{{$i.ID}}"
-                                        label.className="form-label"
-                                        label.appendChild(document.createTextNode( "{{$i.Name}}"))
-                                    var br = document.createElement('br');
-                                        dv.appendChild(checkbox)
-                                        dv.appendChild(label)
-                                        dv.appendChild(br)
-                                </script>
-                            {{end}}
+                            </div>
                         </div>
                         <br>
                         <div class="row g-3">
@@ -157,7 +159,12 @@
             label.htmlFor = 'car';
             label.appendChild(document.createTextNode('Car'));
     }
-
+    id.addEventListener('change',e=>{
+        let check=document.querySelectorAll('input[type=checkbox]:checked')
+        for(var i=0;i<check.length;i++){
+            check[i].checked=false
+        }
+    })
     pasf.addEventListener('change',e=>{ 
         const data= new FormData()
         data.append('Passport',e.target.files[0])
@@ -346,9 +353,10 @@
             }
        
         setTimeout(()=>{ 
-            y.className="alter"
-            y.innerHTML=""
-        },10000)
+            if(type!="search"){
+                location.reload()
+            }
+        },3000)
     }
     
 </script>

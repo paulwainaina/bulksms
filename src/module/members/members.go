@@ -25,8 +25,8 @@ type Member struct {
 	Deceased    bool   `bson:"Deceased"`
 	PhoneNumber string `bson:"PhoneNumber"`
 	Email       string `bson:"Email"`
-	District    uint    `bson:"District"`
-	Group       []uint   `bson:"Group"`
+	District    uint   `bson:"District"`
+	Group       []uint `bson:"Group"`
 }
 
 func (member *Member) Marshal(v interface{}) ([]byte, error) {
@@ -37,9 +37,9 @@ func (member *Member) Marshal(v interface{}) ([]byte, error) {
 		Deceased:    member.Deceased,
 		PhoneNumber: member.PhoneNumber,
 		DateofBirth: member.DateofBirth,
-		Email: member.Email,
-		District: member.District,
-		Group: member.Group,
+		Email:       member.Email,
+		District:    member.District,
+		Group:       member.Group,
 	})
 	return memb, err
 }
@@ -52,22 +52,23 @@ func (member *Member) UnmarshalJSON(data []byte) error {
 	}
 	for k, v := range jsonData {
 		switch strings.ToLower(k) {
-		case "group":{
-			l:=make([]uint,0)
-			var vals []interface{}=v.([]interface{})
-			for _,x:=range vals {
-				i, err := strconv.ParseInt(string(x.(string)), 10, 32)
-				if err != nil {
-					return err
+		case "group":
+			{
+				l := make([]uint, 0)
+				var vals []interface{} = v.([]interface{})
+				for _, x := range vals {
+					i, err := strconv.ParseInt(string(x.(string)), 10, 32)
+					if err != nil {
+						return err
+					}
+					l = append(l, uint(i))
 				}
-				l=append(l,uint(i))
+				member.Group = l
 			}
-			member.Group=l
-		}
 		case "district":
 			{
 				str := string(v.(string))
-				if len(str)==0{
+				if len(str) == 0 {
 					break
 				}
 				i, err := strconv.ParseInt(str, 10, 32)
@@ -78,12 +79,12 @@ func (member *Member) UnmarshalJSON(data []byte) error {
 			}
 		case "email":
 			{
-				member.Email= string(v.(string))
+				member.Email = string(v.(string))
 			}
 		case "id":
 			{
 				str := string(v.(string))
-				if len(str)==0{
+				if len(str) == 0 {
 					break
 				}
 				i, err := strconv.ParseInt(str, 10, 64)
@@ -173,6 +174,9 @@ func (members *Members) AddMember(memb Member) (*Member, error) {
 	if memb.ID != 0 {
 		return &Member{}, fmt.Errorf("new member cannot have an id %v ", memb.ID)
 	}
+	if memb.PhoneNumber == "" {
+		return &Member{}, fmt.Errorf("new member has to have a phone number %v ", memb.ID)
+	}
 	for _, m := range members.TargetMembers {
 		if m.PhoneNumber == memb.PhoneNumber {
 			return &Member{}, fmt.Errorf("a member with the same number exists %v ", m.PhoneNumber)
@@ -232,10 +236,10 @@ func (members *Members) UpdateMember(memb Member) (*Member, error) {
 					"Deceased":    memb.Deceased,
 					"Gender":      memb.Gender,
 					"PhoneNumber": memb.PhoneNumber,
-					"Email":memb.Email,
-					"District":memb.District,
-					"Passport":memb.Passport,
-					"Group":memb.Group,
+					"Email":       memb.Email,
+					"District":    memb.District,
+					"Passport":    memb.Passport,
+					"Group":       memb.Group,
 				}})
 			if err != nil {
 				return &Member{}, err
