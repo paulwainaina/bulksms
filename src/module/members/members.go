@@ -17,29 +17,39 @@ import (
 )
 
 type Member struct {
-	ID          uint64 `bson:"ID"`
-	Name        string `bson:"Name"`
-	Gender      string `bson:"Gender"`
-	DateofBirth string `bson:"DateofBirth"`
-	Passport    string `bson:"Passport"`
-	Deceased    bool   `bson:"Deceased"`
-	PhoneNumber string `bson:"PhoneNumber"`
-	Email       string `bson:"Email"`
-	District    uint   `bson:"District"`
-	Group       []uint `bson:"Group"`
+	ID             uint64 `bson:"ID"`
+	Name           string `bson:"Name"`
+	Gender         string `bson:"Gender"`
+	DateofBirth    string `bson:"DateofBirth"`
+	Passport       string `bson:"Passport"`
+	PhoneNumber    string `bson:"PhoneNumber"`
+	Email          string `bson:"Email"`
+	District       uint   `bson:"District"`
+	Group          []uint `bson:"Group"`
+	Full           bool   `bson:"Full"`
+	DateofDeath    string `bson:"DateofDeath"`
+	SID            uint64 `bson:"SID"`
+	DateofMarriage string `bson:"DateofMarriage"`
+	DateofCatch    string `bson:"DateofCatch"`
+	DateofBap      string `bson:"DateofBap"`
 }
 
 func (member *Member) Marshal(v interface{}) ([]byte, error) {
 	memb, err := json.Marshal(Member{
-		ID:          member.ID,
-		Name:        member.Name,
-		Gender:      member.Gender,
-		Deceased:    member.Deceased,
-		PhoneNumber: member.PhoneNumber,
-		DateofBirth: member.DateofBirth,
-		Email:       member.Email,
-		District:    member.District,
-		Group:       member.Group,
+		ID:             member.ID,
+		Name:           member.Name,
+		Gender:         member.Gender,
+		PhoneNumber:    member.PhoneNumber,
+		DateofBirth:    member.DateofBirth,
+		Email:          member.Email,
+		District:       member.District,
+		Group:          member.Group,
+		Full:           member.Full,
+		DateofDeath:    member.DateofDeath,
+		DateofMarriage: member.DateofMarriage,
+		DateofCatch:    member.DateofCatch,
+		DateofBap:      member.DateofBap,
+		SID:            member.SID,
 	})
 	return memb, err
 }
@@ -81,6 +91,38 @@ func (member *Member) UnmarshalJSON(data []byte) error {
 			{
 				member.Email = string(v.(string))
 			}
+		case "dateofcatch":
+			{
+				member.DateofCatch = v.(string)
+			}
+		case "dateofbap":
+			{
+				member.DateofBap = v.(string)
+			}
+		case "dateofmarriage":
+			{
+				member.DateofMarriage = v.(string)
+			}
+		case "dateofdeath":
+			{
+				member.DateofDeath = v.(string)
+			}
+		case "full":
+			{
+				member.Full = v.(bool)
+			}
+		case "sid":
+			{
+				str := string(v.(string))
+				if len(str) == 0 {
+					break
+				}
+				i, err := strconv.ParseInt(str, 10, 64)
+				if err != nil {
+					return err
+				}
+				member.SID = uint64(i)
+			}
 		case "id":
 			{
 				str := string(v.(string))
@@ -104,10 +146,6 @@ func (member *Member) UnmarshalJSON(data []byte) error {
 		case "passport":
 			{
 				member.Passport = string(v.(string))
-			}
-		case "deceased":
-			{
-				member.Deceased = bool(v.(bool))
 			}
 		case "phonenumber":
 			{
@@ -231,15 +269,20 @@ func (members *Members) UpdateMember(memb Member) (*Member, error) {
 			col := members.db.Database(os.Getenv("DB")).Collection(memberCollection)
 			_, err := col.UpdateOne(context.TODO(), bson.M{"ID": m.ID},
 				bson.M{"$set": bson.M{
-					"Name":        memb.Name,
-					"DateofBirth": memb.DateofBirth,
-					"Deceased":    memb.Deceased,
-					"Gender":      memb.Gender,
-					"PhoneNumber": memb.PhoneNumber,
-					"Email":       memb.Email,
-					"District":    memb.District,
-					"Passport":    memb.Passport,
-					"Group":       memb.Group,
+					"Name":           memb.Name,
+					"DateofBirth":    memb.DateofBirth,
+					"Gender":         memb.Gender,
+					"PhoneNumber":    memb.PhoneNumber,
+					"Email":          memb.Email,
+					"District":       memb.District,
+					"Passport":       memb.Passport,
+					"Group":          memb.Group,
+					"Full":           memb.Full,
+					"DateofDeath":    memb.DateofDeath,
+					"SID":            memb.SID,
+					"DateofMarriage": memb.DateofMarriage,
+					"DateofCatch":    memb.DateofCatch,
+					"DateofBap":      memb.DateofBap,
 				}})
 			if err != nil {
 				return &Member{}, err

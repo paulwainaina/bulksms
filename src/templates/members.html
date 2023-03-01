@@ -102,14 +102,37 @@
                                 <label for="md">Date of Birth</label>
                                 <input type="date" class="form-control" id="md" >
                             </div>
+                        </div>  
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label for="mpn">Phone Number</label>
+                                <input type="tel" class="form-control" id="mpn" pattern="[0-9]{10}" >
+                            </div>                           
+                            <div class="col-md-6">
+                                <label class="form-label" for="me" >Email</label>
+                                <input type="email" class="form-control" id="me" >
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="mpn">Phone Number</label>
-                            <input type="tel" class="form-control" id="mpn" pattern="[0-9]{10}" >
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label for="mdb">Date of Baptisim</label>
+                                <input type="date" class="form-control" id="mdb" >
+                            </div>
+                            <div class="col-md-6">
+                                <label for="mdc">Date of Catechism</label>
+                                <input type="date" class="form-control" id="mdc" >
+                            </div>
+                           
                         </div>
-                        <div class="form-group">
-                            <label class="form-label" for="me" >Email</label>
-                            <input type="email" class="form-control" id="me" >
+                        <div class="row g-2">
+                             <div class="col-md-6">
+                                <label for="mdm">Date of Marriage</label>
+                                <input type="date" class="form-control" id="mdm" >
+                            </div>
+                             <div class="col-md-6">
+                                <label for="sid">Spouse ID</label>
+                                <input type="number" class="form-control" id="sid" mon="0" >
+                            </div>
                         </div>
                         <div class="row g-2">
                             <div class="col-md-6">
@@ -127,29 +150,42 @@
                                     {{end}}
                                 </select>
                             </div>
-                            <div class="col-md-6" id="fg" >  
-                                <label class="form-label" for="fg">Groups</label>
-                                <br>
-                                {{range $i:=.Data.Groups}}
-                                    <script>
-                                        var dv=document.getElementById('fg')
-                                        var checkbox = document.createElement('input');
-                                        checkbox.type = "checkbox";
-                                        checkbox.name = "{{$i.Name}}"
-                                        checkbox.value = "{{$i.ID}}";
-                                        checkbox.id="group"+"{{$i.ID}}"
-                                        var label = document.createElement('label');
-                                            label.htmlFor="group"+"{{$i.ID}}"
-                                            label.className="form-label"
-                                            label.appendChild(document.createTextNode( "{{$i.Name}}"))
-                                        var br = document.createElement('br');
-                                            dv.appendChild(checkbox)
-                                            dv.appendChild(label)
-                                            dv.appendChild(br)
-                                    </script>
-                                {{end}}
+                            <div class="col-md-6" > 
+                                <label class="form-label" for="fg">Groups</label>  
+                                <div id="fg" style="border:1px solid black;padding: 10px;overflow:scroll;width:auto;height:100px">
+                               
+                                    {{range $i:=.Data.Groups}}
+                                        <script>
+                                            var dv=document.getElementById('fg')
+                                            var checkbox = document.createElement('input');
+                                            checkbox.type = "checkbox";
+                                            checkbox.name = "{{$i.Name}}"
+                                            checkbox.value = "{{$i.ID}}";
+                                            checkbox.id="group"+"{{$i.ID}}"
+                                            var label = document.createElement('label');
+                                                label.htmlFor="group"+"{{$i.ID}}"
+                                                label.className="form-label"
+                                                label.appendChild(document.createTextNode( "{{$i.Name}}"))
+                                            var br = document.createElement('br');
+                                                dv.appendChild(checkbox)
+                                                dv.appendChild(label)
+                                                dv.appendChild(br)
+                                        </script>
+                                    {{end}}
+                                </div>
+                            </div>                            
+                        </div>
+                        <div class="row g-2"> 
+                            <div class="col-md-6" id="fm" style="border:1px solid black;">
+                                <label class="form-label" for="fm">Full Member</label>
+                                <input type="checkbox" id="fmc" name="Full member">
+                            </div>                           
+                            <div class="col-md-6">
+                                <label for="mdd">Date of Death</label>
+                                <input type="date" class="form-control" id="mdd" >
                             </div>
                         </div>
+                        
                         <br>
                         <div class="row g-3">
                             <div class="col-md-4">               
@@ -186,16 +222,14 @@
     let pasf=document.getElementById('passfile')
     let group=document.getElementById('mdg')
 
-    window.onload = (event) => {
+    let full=document.getElementById('fmc')
+    let death=document.getElementById('mdd')
+    let spouse=document.getElementById('sid')
+    let marr=document.getElementById('mdm')
+    let catc=document.getElementById('mdc')
+    let bap=document.getElementById('mdb')
 
-        var checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.name = 'interest';
-            checkbox.value = 'car';
-        var label = document.createElement('label')
-            label.htmlFor = 'car';
-            label.appendChild(document.createTextNode('Car'));
-    }
+   
     id.addEventListener('change',e=>{
         let check=document.querySelectorAll('input[type=checkbox]:checked')
         for(var i=0;i<check.length;i++){
@@ -233,14 +267,17 @@
     function submitForm(type){       
         event.preventDefault()
         event.stopPropagation()
-        let check=document.querySelectorAll('input[type=checkbox]:checked')
+        let check=Object.keys(groups)
         let num=[]
         for(var i=0;i<check.length;i++){
-            num.push(check[i].value)
+            var x=document.getElementById("group"+check[i])
+            if (x.checked){
+                num.push(x.value)
+            }
         }
         switch(type){
                 case "add":{
-                    let data=JSON.stringify({"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value,"Passport":pas.src,"Email":email.value,"District":district.value,"Group":num})
+                    let data=JSON.stringify({"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value,"Passport":pas.src,"Email":email.value,"District":district.value,"Group":num,"Full":full.checked,"DateofDeath":death.value,"SID":sid.value,"DateofMarriage":marr.value,"DateofCatch":catc.value,"DateofBap":bap.value})
                     fetch('http://127.0.0.1:8080/members',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
                         (result)=>{                    
                             if (!result.ok){                    
@@ -269,6 +306,12 @@
                                             document.getElementById("group"+d["Group"][i]).checked=true
                                         }
                                     }
+                                    full.checked=d["Full"]
+                                    death.value=d["DateofDeath"]
+                                    spouse.value=d["SID"]
+                                    marr.value=d["DateofMarriage"]
+                                    catc.value=d["DateofCatch"]
+                                    bap.value=d["DateofBap"]
                                 }                
                             }).catch((e)=>{
                             y.classList.add("alter-danger")
@@ -277,7 +320,7 @@
                     break
                 }
                 case "update":{
-                    let data=JSON.stringify({"Passport":pas.src,"ID":id.value,"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value,"Email":email.value,"District":district.value,"Group":num})
+                    let data=JSON.stringify({"Passport":pas.src,"ID":id.value,"Name":name.value,"Gender":gender.value,"DateofBirth":date.value,"PhoneNumber":number.value,"Email":email.value,"District":district.value,"Group":num,"Full":full.checked,"DateofDeath":death.value,"SID":sid.value,"DateofMarriage":marr.value,"DateofCatch":catc.value,"DateofBap":bap.value})
                     fetch('http://127.0.0.1:8080/members',{ method:'PUT',headers:{'Content-Type':'application/json'},credentials:"include",body:data}).then(
                         (result)=>{                    
                             if (!result.ok){                    
@@ -306,6 +349,12 @@
                                             document.getElementById("group"+d["Group"][i]).checked=true
                                         }
                                     }
+                                    full.checked=d["Full"]
+                                    death.value=d["DateofDeath"]
+                                    spouse.value=d["SID"]
+                                    marr.value=d["DateofMarriage"]
+                                    catc.value=d["DateofCatch"]
+                                    bap.value=d["DateofBap"]
                                 }                             
                             }).catch((e)=>{
                                 y.classList.add("alter-danger")
@@ -343,6 +392,12 @@
                                             document.getElementById("group"+d["Group"][i]).checked=true
                                         }
                                     }
+                                    full.checked=d["Full"]
+                                    death.value=d["DateofDeath"]
+                                    spouse.value=d["SID"]
+                                    marr.value=d["DateofMarriage"]
+                                    catc.value=d["DateofCatch"]
+                                    bap.value=d["DateofBap"]
                                 }                                  
                         }).catch((e)=>{
                             y.classList.add("alter-danger")
@@ -379,6 +434,12 @@
                                             document.getElementById("group"+d["Group"][i]).checked=true
                                         }
                                     }
+                                    full.checked=d["Full"]
+                                    death.value=d["DateofDeath"]
+                                    spouse.value=d["SID"]
+                                    marr.value=d["DateofMarriage"]
+                                    catc.value=d["DateofCatch"]
+                                    bap.value=d["DateofBap"]
                                 }                 
                             }).catch((e)=>{
                                 y.classList.add("alter-danger")

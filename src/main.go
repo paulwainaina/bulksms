@@ -71,7 +71,7 @@ func MemberHandler(w http.ResponseWriter, r *http.Request) {
 	page, err := LoadPage(filePath)
 	if err != nil {
 		page = &Page{Title: pageName}
-	}	
+	}
 	page.Title = pageName
 	da := struct {
 		Members   []*members.Member
@@ -133,6 +133,7 @@ type BulkMessage struct {
 	District string        `bson:"District"`
 	Title    string        `bson:"Title"`
 	Message  string        `bson:"Message"`
+	Group string 	`bson:"Group"`
 }
 
 func MessageHandler(w http.ResponseWriter, r *http.Request) {
@@ -152,7 +153,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 			recp += bulk.Numbers[i].(string)
 		}
 	}
-	if bulk.District != "" {
+	if bulk.District != ""  {
 		n, err := strconv.ParseInt(bulk.District, 10, 64)
 		if err != nil {
 			res := struct{ Error string }{Error: err.Error()}
@@ -168,6 +169,29 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 					recp += u.PhoneNumber
 				}
 			}
+		}
+	}
+	if bulk.Group != ""  {
+		n, err := strconv.ParseInt(bulk.Group, 10, 64)
+		if err != nil {
+			res := struct{ Error string }{Error: err.Error()}
+			json.NewEncoder(w).Encode(res)
+			return
+		}
+		for _, u := range memb.TargetMembers {
+			for _,g:=range u.Group{
+				if g == uint(n) {
+					if !strings.Contains(recp, u.PhoneNumber) {
+						if recp == "" {
+							recp += u.PhoneNumber
+						} else {
+							recp += ","
+							recp += u.PhoneNumber
+						}
+					}
+					break
+				}
+			}			
 		}
 	}
 	if recp == "" {
@@ -240,7 +264,14 @@ func MessagePageHandler(w http.ResponseWriter, r *http.Request) {
 		page = &Page{Title: pageName}
 	}
 	page.Title = pageName
-	page.Data = memb.TargetMembers
+	d := struct {
+		Members   []*members.Member
+		Groups    []*groups.Group
+		Districts []*districts.District
+	}{Members: memb.TargetMembers,
+		Groups:    group.TargetGroups,
+		Districts: dist.TargetDistricts}
+	page.Data = d
 	RenderTemplate(w, file, page)
 }
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {

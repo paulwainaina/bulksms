@@ -8,7 +8,7 @@
                 {{range $i:=.Data}} 
                 <div class="col">
                     <div class="card h-100">
-                        <img class="card-img-top" src={{$i.Logo}} style="border-radius:20%;width:auto;height:150px;">
+                        <img class="card-img-top" src={{$i.Logo}} style="border-radius:20%;">
                       
                         <div class="card-body">
                             <h5 class="card-title">{{$i.ID}}: {{$i.Name}}</h5>
@@ -35,7 +35,7 @@
                             </div> 
                         </div>
                         <div  class="form-group">
-                            <img id="dlp" src="/assets/default_group.png" style="padding: 10px;border-radius: 20%;width:auto;height:150px;display:block;margin-left: auto;margin-right: auto;"  />
+                            <img id="dlp" src="/assets/default_group.png" style="padding: 10px;border-radius: 20%;width:150px;height:150px;display:block;margin-left: auto;margin-right: auto;"  />
                             <label for="dl">Group logo</label>
                             <input type="file" id="dl" accept="image/*">
                         </div>

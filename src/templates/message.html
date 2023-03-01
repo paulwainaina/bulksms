@@ -6,28 +6,42 @@
             <div class="col-9"style="margin:auto;padding:20px">
                 <form id="mform">
                     <div class="row g-2">                
-                        <div class="col-mb-8" style="overflow:scroll;width:200px;height:200px">                
-                            {{range $i:=.Data}}
+                        <div class="col-mb-6" style="overflow:scroll;width:auto;height:200px">                
+                            {{range $i:=.Data.Members}}
                             <label for="number" class="option">{{$i.Name}} {{$i.PhoneNumber}}</label> 
                             <input type="checkbox" class="checkbox" value="{{$i.PhoneNumber}}" ><br>
                             {{end}}
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-2">
                             <label class="form-label" for="md" >District</label>
                             <select type="text" class="form-select" id="md">
                                 <option selected></option>
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3">3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                                <option value="6">6</option>
+                                {{range $i:=.Data.Districts}}
+                                    <script>
+                                        var opt=document.createElement('option')
+                                        opt.value="{{$i.ID}}"
+                                        opt.id="district"+"{{$i.ID}}"
+                                        opt.innerHTML="{{$i.Name}}"
+                                        document.getElementById('md').append(opt)
+                                    </script>
+                                {{end}}
                             </select>
                         </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="title" class="form-label">Message Title</label>
-                        <input type="text" class="form-control" id="title"  required>
+                        <div class="col-md-2">
+                            <label class="form-label" for="mg" >Group</label>
+                            <select type="text" class="form-select" id="mg">
+                                <option selected></option>
+                                {{range $i:=.Data.Groups}}
+                                    <script>
+                                        var opt=document.createElement('option')
+                                        opt.value="{{$i.ID}}"
+                                        opt.id="group"+"{{$i.ID}}"
+                                        opt.innerHTML="{{$i.Name}}"
+                                        document.getElementById('md').append(opt)
+                                    </script>
+                                {{end}}
+                            </select>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="message" class="form-label">Message</label>
@@ -56,6 +70,7 @@
 <script>  
     let y=document.getElementById('errorDiv')
     var form=document.getElementById("mform")
+
     form.addEventListener("submit", function(event){  
         event.preventDefault()
         event.stopPropagation()
@@ -67,12 +82,12 @@
             for(var i=0;i<check.length;i++){
                 num.push(check[i].value)
             }
-            if(num.length==0 &&document.getElementById("md").value=="" ){
+            if(num.length==0 &&document.getElementById("md").value==""&& document.getElementById("mg").value==""){
                 y.classList.add("alter-danger")
                 y.innerHTML="No receipients selected"
                 form.classList.remove('was-validated')
             }else{
-                let data=JSON.stringify({"Numbers":num,"District":document.getElementById("md").value,"Title":document.getElementById("title").value,"Message":document.getElementById("message").value})
+                let data=JSON.stringify({"Numbers":num,"Group":document.getElementById("mg").value,"District":document.getElementById("md").value,"Title":document.getElementById("title").value,"Message":document.getElementById("message").value})
                 fetch('http://127.0.0.1:8080/message',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
                     (result)=>{                    
                         if (!result.ok){                    
@@ -110,6 +125,7 @@
                 }) 
             }
         }           
-        setTimeout(()=>{ y.innerText=""},5000)
+        setTimeout(()=>{
+        },5000)
     } )      
 </script>
