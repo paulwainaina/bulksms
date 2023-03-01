@@ -5,13 +5,27 @@
     <div class="row">
         <div class="col-8">
             <div class="row row-cols-1 row-cols-md-4 g-4">
+                <script>
+                    let groups={}
+                    let districts={}
+                </script>
+                {{range $gro:=.Data.Groups}}
+                    <script>
+                        groups["{{$gro.ID}}"]="{{$gro.Name}}"
+                    </script>
+                {{end}}
+                {{range $dist:=.Data.Districts}}
+                    <script>
+                        districts["{{$dist.ID}}"]="{{$dist.Name}}"
+                    </script>
+                {{end}}
                 {{range $i:=.Data.Members}} 
                 <div class="col">
                     <div class="card h-100">
-                        <img class="card-img-top" src={{$i.Passport}} style="border-radius:20%;width:150px;height:150px;">                      
+                        <img class="card-img-top" src={{$i.Passport}} style="border-radius:20%;width:auto;height:150px;">                      
                         <div class="card-body">
                             <h5 class="card-title">{{$i.ID}}: {{$i.Name}}</h5>
-                            <p class="card-body">
+                            <p class="card-text" id={{$i.ID}}>
                                 <b>Gender</b>:{{$i.Gender}}
                                 <br>
                                 <b>DoB</b>:{{$i.DateofBirth}}
@@ -20,8 +34,31 @@
                                 <br>
                                 <b>Email</b>:{{$i.Email}}
                                 <br>
-                                <b>District</b>:{{$i.District}}
-
+                                <b>District</b>:                               
+                                <script>                                   
+                                   var br = document.createElement('br');
+                                   if(districts.hasOwnProperty("{{$i.District}}")){
+                                        var label = document.createElement('label');
+                                        label.appendChild(document.createTextNode( districts["{{$i.District}}"]))
+                                        document.getElementById("{{$i.ID}}").appendChild(label)
+                                        document.getElementById("{{$i.ID}}").appendChild(br)                                        
+                                    }else{
+                                        document.getElementById("{{$i.ID}}").appendChild(br)  
+                                    }
+                                </script>
+                                <b>Groups</b>:
+                                <script>
+                                    a="{{$i.Group}}"
+                                   if( a!=null){
+                                        for(var i=0;i<a.length;i++){
+                                            if(groups.hasOwnProperty(a[i])){
+                                                var l = document.createElement('li');                                               
+                                                l.appendChild(document.createTextNode( groups[a[i]]))
+                                                document.getElementById("{{$i.ID}}").appendChild(l)  
+                                            }                                               
+                                        }
+                                    }
+                                </script>
  
                             </p>
                         </div>
@@ -44,7 +81,7 @@
                             </div> 
                         </div>
                         <div class="form-group">
-                            <img id="pass" src="/assets/default_image.png"  style="padding: 10px;border-radius:20%;height:150px;display:block;margin-left: auto;margin-right: auto;"  />
+                            <img id="pass" src="/assets/default_image.png"  style="padding: 10px;border-radius:20%;height:150px;width:auto;display:block;margin-left: auto;margin-right: auto;"  />
                             <label for="passfile">Member Passport</label>
                             <input type="file" id="passfile" accept="image/*">
                         </div>

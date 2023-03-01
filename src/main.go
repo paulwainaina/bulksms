@@ -71,16 +71,16 @@ func MemberHandler(w http.ResponseWriter, r *http.Request) {
 	page, err := LoadPage(filePath)
 	if err != nil {
 		page = &Page{Title: pageName}
-	}
+	}	
 	page.Title = pageName
-	d := struct {
+	da := struct {
 		Members   []*members.Member
 		Groups    []*groups.Group
 		Districts []*districts.District
 	}{Members: memb.TargetMembers,
 		Groups:    group.TargetGroups,
 		Districts: dist.TargetDistricts}
-	page.Data = d
+	page.Data = da
 	RenderTemplate(w, file, page)
 }
 
