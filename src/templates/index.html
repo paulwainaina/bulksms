@@ -21,9 +21,8 @@
             <div class="card"style="width: 18rem;">
                 <div class="card-body">
                     <h5 class="card-title">Number of registered members</h5>
-                    <p class="card-body">
-                        Number: {{len .Data.Members}}  
-                    
+                    <p class="card-text">
+                        <b>Number</b>: {{len .Data.Members}} 
                     </p>
                 </div>
             </div>
@@ -32,9 +31,8 @@
             <div class="card"style="width: 18rem;">
                 <div class="card-body">
                     <h5 class="card-title">Number of registered groups</h5>
-                    <p class="card-body">
-                        Number: {{len .Data.Groups}}  
-                    
+                    <p class="card-text">
+                        <b>Number</b>: {{len .Data.Groups}}
                     </p>
                 </div>
             </div>
@@ -43,19 +41,19 @@
             <div class="card"style="width: 18rem;">
                 <div class="card-body">
                     <h5 class="card-title">Number of registered districts</h5>
-                    <p class="card-body">
-                        Number: {{len .Data.Districts}}  
-                    
+                    <p class="card-text">
+                        <b>Number</b>: {{len .Data.Districts}} 
                     </p>
                 </div>
             </div>
         </div>
     </div>
     <div>
-        <div >
+        <br>
+        <div class="container">
             <form class="row g-4" id="form">
                 <div class="col">
-                    <label class="form-label" for="name" >Name</label>
+                    <label class="form-label" for="name" >Name/PhoneNumber</label>
                     <input type="text" class="form-control" id="name">
                 </div>
                 <div class="col">
@@ -123,6 +121,7 @@
     
     function Display(){
         const table = document.createElement("table");
+        table.className="table table-striped table-hover table-bordered border-primary"
         let disp=["ID","Name","PhoneNumber","District","Group"]
         const h=document.createElement("thead")
         const row = document.createElement("tr")
@@ -133,12 +132,26 @@
             row.appendChild(cell)
         }
         h.appendChild(row)
+        table.appendChild(h)
         const body=document.createElement("tbody")
         for (let i=0;i<ddata.length;i++){            
             const row = document.createElement("tr")
             for (let a=0;a<disp.length;a++){
                 const cell=document.createElement("td")
-                const celltext=document.createTextNode(ddata[i][disp[a]])
+                let text=""
+                if(disp[a]=="District"){
+                    text=districts[ddata[i][disp[a]]]
+                }else if (disp[a]=="Group"){
+                    for(let f=0;f<ddata[i][disp[a]].length;f++){
+                        text+=groups[ddata[i][disp[a]][f]]
+                        if(f!=ddata[i][disp[a]].length-1){
+                            text+=","
+                        }
+                    }
+                }else{
+                    text=ddata[i][disp[a]]
+                }
+                const celltext=document.createTextNode(text)
                 cell.appendChild(celltext)
                 row.appendChild(cell)
             }               

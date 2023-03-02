@@ -316,7 +316,7 @@ func (members *Members) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 				if s.Name!=""{
 					for i:=0;i<len(res);i++{
-						if !strings.Contains(res[i].Name,s.Name){
+						if !strings.Contains(res[i].Name,s.Name) && !strings.Contains(res[i].PhoneNumber,s.Name){
 							res=append(res[:i],res[i+1:]...)
 							i--
 						}
