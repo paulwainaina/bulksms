@@ -295,6 +295,72 @@ func (members *Members) UpdateMember(memb Member) (*Member, error) {
 }
 
 func (members *Members) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path=="/searchmembers"{
+		switch r.Method {
+			case http.MethodPost:{
+				type Search struct{
+					Name string
+					District []string
+					Group []string
+				}
+				var s Search
+				err:=json.NewDecoder(r.Body).Decode(&s)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				
+				res:=make([]Member,0)
+				for _,m:= range members.TargetMembers{
+					res = append(res,*m)
+				}
+				if s.Name!=""{
+					for i:=0;i<len(res);i++{
+						if !strings.Contains(res[i].Name,s.Name){
+							res=append(res[:i],res[i+1:]...)
+							i--
+						}
+					}
+				}
+				if len(s.District)!=0{
+					for _,d:=range s.District{
+						x,_:=strconv.ParseInt(d,10,64)
+						for i:=0;i<len(res);i++{
+							if res[i].District!=uint(x) {
+								res=append(res[:i],res[i+1:]... )
+								i--
+							}
+						}
+					}
+				}
+				if len(s.Group)!=0{
+					for _,d:=range s.Group{
+						x,_:=strconv.ParseInt(d,10,64)
+						for i:=0;i<len(res);i++{
+							var contain=false
+							for _,g:=range res[i].Group{
+								if g==uint(x){
+									contain=true
+									break
+								}
+							}
+							if !contain{
+								res=append(res[:i],res[i+1:]... )
+								i--
+							}
+						}
+					}
+				}
+				json.NewEncoder(w).Encode(res)
+				return
+			}
+			default:{
+				w.WriteHeader(http.StatusNotImplemented)
+				w.Write([]byte("method not implemented"))
+			}
+		}
+		return
+	}
 	if r.URL.Path == "/members" {
 		switch r.Method {
 		case http.MethodGet:

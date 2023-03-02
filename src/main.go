@@ -375,6 +375,7 @@ func main() {
 	memb = members.NewMembers(client)
 	http.Handle("/members", middleware(http.HandlerFunc(memb.ServeHTTP)))
 	http.Handle("/members/", middleware(http.HandlerFunc(memb.ServeHTTP)))
+	http.Handle("/searchmembers", middleware(http.HandlerFunc(memb.ServeHTTP)))
 
 	group = groups.NewGroups(client)
 	http.Handle("/groups", middleware(http.HandlerFunc(group.ServeHTTP)))

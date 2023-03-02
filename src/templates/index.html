@@ -3,6 +3,20 @@
 {{template "body"}} 
 <div class="container-fluid">
     <div class="row row-cols-1 row-cols-md-3 g-4">
+        <script>
+            let groups={}
+            let districts={}
+        </script>
+        {{range $gro:=.Data.Groups}}
+            <script>
+                groups["{{$gro.ID}}"]="{{$gro.Name}}"
+            </script>
+        {{end}}
+        {{range $dist:=.Data.Districts}}
+            <script>
+                districts["{{$dist.ID}}"]="{{$dist.Name}}"
+            </script>
+        {{end}}
         <div class="col">
             <div class="card"style="width: 18rem;">
                 <div class="card-body">
@@ -37,5 +51,148 @@
             </div>
         </div>
     </div>
+    <div>
+        <div >
+            <form class="row g-4" id="form">
+                <div class="col">
+                    <label class="form-label" for="name" >Name</label>
+                    <input type="text" class="form-control" id="name">
+                </div>
+                <div class="col">
+                    <label class="form-label" for="mdi" >District</label>
+                    <div class="form-select" id="mdi" ></div>                              
+                        {{range $i:=.Data.Districts}}
+                            <script>
+                                 var checkbox=document.createElement('input')
+                                checkbox.type = "checkbox";
+                                checkbox.name = "{{$i.Name}}"
+                                checkbox.value = "{{$i.ID}}";
+                                checkbox.id="district"+"{{$i.ID}}"
+                                var label = document.createElement('label');
+                                                label.htmlFor="group"+"{{$i.ID}}"
+                                                label.className="form-label"
+                                                label.appendChild(document.createTextNode( "{{$i.Name}}"))
+                                document.getElementById('mdi').append(checkbox)
+                                document.getElementById('mdi').append(label)
+                                var br = document.createElement('br');
+                                document.getElementById('mdi').append(br) 
+                            </script>
+                        {{end}}
+
+                </div>
+                <div class="col">
+                    <label class="form-label" for="fg">Groups</label>  
+                    <div class="form-select" id="fg" ></div>
+                    {{range $i:=.Data.Groups}}
+                        <script>
+                            var checkbox=document.createElement('input')
+                            checkbox.type = "checkbox";
+                            checkbox.name = "{{$i.Name}}"
+                            checkbox.value = "{{$i.ID}}";
+                            checkbox.id="group"+"{{$i.ID}}"
+                            var label = document.createElement('label');
+                                                label.htmlFor="group"+"{{$i.ID}}"
+                                                label.className="form-label"
+                                                label.appendChild(document.createTextNode( "{{$i.Name}}"))
+                                document.getElementById('fg').append(checkbox)
+                                document.getElementById('fg').append(label)
+                            var br = document.createElement('br');
+                            document.getElementById('fg').append(br)                          
+                        </script>
+                    {{end}}
+                </div>
+                <div class="col">
+                    <label for="b"></label>
+                    <button type="submit" class="btn btn-primary" id="b">Filter</button>
+                </div>                
+            </form>
+            <div id="errorDiv" class="alter" role="alter" >
+
+            </div>
+            <div id="ta"></div>
+        </div>
+    </div>
 </div>
 {{template "footer"}}
+<script>
+    let y=document.getElementById("errorDiv")
+    let name=document.getElementById("name")
+    let district=document.getElementById("mdi")
+    let group=document.getElementById("fg")
+    let ddata=[]
+    
+    function Display(){
+        const table = document.createElement("table");
+        let disp=["ID","Name","PhoneNumber","District","Group"]
+        const h=document.createElement("thead")
+        const row = document.createElement("tr")
+        for (let a=0;a<disp.length;a++){            
+            const cell=document.createElement("th")
+            const celltext=document.createTextNode(disp[a])
+            cell.appendChild(celltext)
+            row.appendChild(cell)
+        }
+        h.appendChild(row)
+        const body=document.createElement("tbody")
+        for (let i=0;i<ddata.length;i++){            
+            const row = document.createElement("tr")
+            for (let a=0;a<disp.length;a++){
+                const cell=document.createElement("td")
+                const celltext=document.createTextNode(ddata[i][disp[a]])
+                cell.appendChild(celltext)
+                row.appendChild(cell)
+            }               
+            body.appendChild(row)
+        }
+        table.appendChild(body)
+        document.getElementById("ta").append(table)
+    }
+    const form=document.getElementById("form")
+    form.addEventListener("submit",()=>{
+        event.preventDefault()
+        event.stopPropagation()
+        let check=Object.keys(groups)
+        let num=[]
+        for(var i=0;i<check.length;i++){
+            var x=document.getElementById("group"+check[i])
+            if (x.checked){
+                num.push(x.value)
+            }
+        }
+        let check2=Object.keys(districts)
+        let num2=[]
+        for(var i=0;i<check2.length;i++){
+            var x=document.getElementById("district"+check2[i])
+            if (x.checked){
+                num2.push(x.value)
+            }
+        }
+
+        let data=JSON.stringify({"Name":name.value,"District":num2,"Group":num})
+        fetch('http://127.0.0.1:8080/searchmembers',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
+        (result)=>{                    
+            if (!result.ok){                    
+                throw new Error(result.statusText);
+            }
+            return result.json();
+        }).then(
+        (d)=>{       
+            if(d.hasOwnProperty('Error')){
+                y.classList.add("alter-danger")
+                y.innerHTML=d['Error']                                       
+            }else{
+                y.classList.add("alter-success")
+                y.innerHTML="Users found" 
+                let doc=document.getElementById("ta")
+                while(doc.firstChild){
+                    doc.removeChild(doc.firstChild)
+                }
+                ddata=d 
+                Display()                  
+            }                
+        }).catch((e)=>{
+            y.classList.add("alter-danger")
+            y.innerText=e                                    
+        })
+    })
+</script>
