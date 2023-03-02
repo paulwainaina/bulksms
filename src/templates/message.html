@@ -1,49 +1,92 @@
 {{template "header"}}
     <title>{{.Title}}</title>
 {{template "body"}}  
-    <div class="container" >
+    <div class="container" >      
         <div class="row">
-            <div class="col-9"style="margin:auto;padding:20px">
+            <div class="col-8">
                 <form id="mform">
-                    <div class="row g-2">                
-                        <div class="col-mb-6" style="overflow:scroll;width:auto;height:200px">                
-                            {{range $i:=.Data.Members}}
-                            <label for="number" class="option">{{$i.Name}} {{$i.PhoneNumber}}</label> 
-                            <input type="checkbox" class="checkbox" value="{{$i.PhoneNumber}}" ><br>
+                    <div class="row g-3">                
+                        <div class="col-6" style="overflow:scroll;width:auto;height:200px">   
+                            <script>
+                                let groups={}
+                                let districts={}
+                                let members={}
+                            </script>
+                            {{range $gro:=.Data.Groups}}
+                                <script>
+                                    groups["{{$gro.ID}}"]="{{$gro.Name}}"
+                                </script>
+                            {{end}}
+                            {{range $dist:=.Data.Districts}}
+                                <script>
+                                    districts["{{$dist.ID}}"]="{{$dist.Name}}"
+                                </script>
+                            {{end}}  
+                            <label class="form-label" for="m">Members</label>  
+                            <div class="form-select" id="m" ></div>              
+                            {{range $i:=.Data.Members}}                               
+                                <script>
+                                    members["{{$i.ID}}"]="{{$i.PhoneNumber}}"
+                                    var checkbox=document.createElement('input')
+                                        checkbox.type = "checkbox";
+                                        checkbox.name = "{{$i.Name}}"
+                                        checkbox.value = "{{$i.PhoneNumber}}";
+                                        checkbox.id="member"+"{{$i.ID}}"
+                                        var label = document.createElement('label');
+                                        label.htmlFor="member"+"{{$i.ID}}"
+                                        label.className="form-label"
+                                        label.appendChild(document.createTextNode( "{{$i.Name}}"+" "+"{{$i.PhoneNumber}}"))
+                                        document.getElementById('m').append(checkbox)
+                                        document.getElementById('m').append(label)
+                                        var br = document.createElement('br');
+                                        document.getElementById('m').append(br)  
+                                </script>
                             {{end}}
                         </div>
-                        <div class="col-md-2">
-                            <label class="form-label" for="md" >District</label>
-                            <select type="text" class="form-select" id="md">
-                                <option selected></option>
+                        <div class="col-3">
+                            <label class="form-label" for="mdi" >District</label>
+                            <div class="form-select" id="mdi" ></div>                              
                                 {{range $i:=.Data.Districts}}
                                     <script>
-                                        var opt=document.createElement('option')
-                                        opt.value="{{$i.ID}}"
-                                        opt.id="district"+"{{$i.ID}}"
-                                        opt.innerHTML="{{$i.Name}}"
-                                        document.getElementById('md').append(opt)
+                                        var checkbox=document.createElement('input')
+                                        checkbox.type = "checkbox";
+                                        checkbox.name = "{{$i.Name}}"
+                                        checkbox.value = "{{$i.ID}}";
+                                        checkbox.id="district"+"{{$i.ID}}"
+                                        var label = document.createElement('label');
+                                                        label.htmlFor="group"+"{{$i.ID}}"
+                                                        label.className="form-label"
+                                                        label.appendChild(document.createTextNode( "{{$i.Name}}"))
+                                        document.getElementById('mdi').append(checkbox)
+                                        document.getElementById('mdi').append(label)
+                                        var br = document.createElement('br');
+                                        document.getElementById('mdi').append(br) 
                                     </script>
                                 {{end}}
-                            </select>
                         </div>
-                        <div class="col-md-2">
-                            <label class="form-label" for="mg" >Group</label>
-                            <select type="text" class="form-select" id="mg">
-                                <option selected></option>
-                                {{range $i:=.Data.Groups}}
-                                    <script>
-                                        var opt=document.createElement('option')
-                                        opt.value="{{$i.ID}}"
-                                        opt.id="group"+"{{$i.ID}}"
-                                        opt.innerHTML="{{$i.Name}}"
-                                        document.getElementById('md').append(opt)
-                                    </script>
-                                {{end}}
-                            </select>
+                        <div class="col-3">
+                            <label class="form-label" for="fg">Groups</label>  
+                            <div class="form-select" id="fg" ></div>
+                            {{range $i:=.Data.Groups}}
+                                <script>
+                                    var checkbox=document.createElement('input')
+                                    checkbox.type = "checkbox";
+                                    checkbox.name = "{{$i.Name}}"
+                                    checkbox.value = "{{$i.ID}}";
+                                    checkbox.id="group"+"{{$i.ID}}"
+                                    var label = document.createElement('label');
+                                                        label.htmlFor="group"+"{{$i.ID}}"
+                                                        label.className="form-label"
+                                                        label.appendChild(document.createTextNode( "{{$i.Name}}"))
+                                        document.getElementById('fg').append(checkbox)
+                                        document.getElementById('fg').append(label)
+                                    var br = document.createElement('br');
+                                    document.getElementById('fg').append(br)                          
+                                </script>
+                            {{end}}
                         </div>
                     </div>
-                    <div class="mb-3">
+                    <div class="col-mb-3">
                         <label for="message" class="form-label">Message</label>
                         <textarea type="text" class="form-control" id="message" row="3" required></textarea>
                     </div>
@@ -52,9 +95,9 @@
                         <button type="submit"  class="btn btn-primary">Message</button>
                     </div>            
                 </form> 
-                <div id="errorDiv" class="alter" role="alter" sytle="height:200px;width:100%"></div>
+                <div id="errorDiv" class="alter"></div>
             </div>
-            <div class="col-3">
+            <div class="col-4">
                 <div class="card">
                     <h5 class="card-title" ><div id="smshead"></div></h5>
                     <p class="card-text">
@@ -75,19 +118,44 @@
         event.preventDefault()
         event.stopPropagation()
         if (form.checkValidity()){
-            form.classList.add('was-validated') 
-          
-            let check=document.querySelectorAll('input[type=checkbox]:checked')
+            form.classList.add('was-validated')           
+            
+            let check=Object.keys(groups)
             let num=[]
             for(var i=0;i<check.length;i++){
-                num.push(check[i].value)
+                var x=document.getElementById("group"+check[i])
+                if (x.checked){
+                    if (x.value!=""){
+                    num.push(x.value)
+                    }
+                }
             }
-            if(num.length==0 &&document.getElementById("md").value==""&& document.getElementById("mg").value==""){
+            let check1=Object.keys(members)
+            let num1=[]
+            for(var i=0;i<check1.length;i++){
+                var x=document.getElementById("member"+check1[i])
+                if (x.checked){
+                    if (x.value!=""){
+                    num1.push(x.value)
+                    }
+                }
+            }
+            let check2=Object.keys(districts)
+            let num2=[]
+            for(var i=0;i<check2.length;i++){
+                var x=document.getElementById("district"+check2[i])
+                if (x.checked){
+                    if (x.value!=""){
+                    num2.push(x.value)
+                    }
+                }
+            }
+            if(num.length==0 &&num2.length==0 && num1.length==0){
                 y.classList.add("alter-danger")
                 y.innerHTML="No receipients selected"
                 form.classList.remove('was-validated')
             }else{
-                let data=JSON.stringify({"Numbers":num,"Group":document.getElementById("mg").value,"District":document.getElementById("md").value,"Title":document.getElementById("title").value,"Message":document.getElementById("message").value})
+                let data=JSON.stringify({"Numbers":num1,"Group":num,"District":num2,"Message":document.getElementById("message").value})
                 fetch('http://127.0.0.1:8080/message',{ method:'POST',headers:{'Content-Type':'application/json'},credentials:"include",body: data}).then(
                     (result)=>{                    
                         if (!result.ok){                    

@@ -130,10 +130,10 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 type BulkMessage struct {
 	Numbers  []interface{} `bson:"Numbers"`
-	District string        `bson:"District"`
+	District []string        `bson:"District"`
 	Title    string        `bson:"Title"`
 	Message  string        `bson:"Message"`
-	Group string 	`bson:"Group"`
+	Group []string 	`bson:"Group"`
 }
 
 func MessageHandler(w http.ResponseWriter, r *http.Request) {
@@ -153,45 +153,49 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 			recp += bulk.Numbers[i].(string)
 		}
 	}
-	if bulk.District != ""  {
-		n, err := strconv.ParseInt(bulk.District, 10, 64)
-		if err != nil {
-			res := struct{ Error string }{Error: err.Error()}
-			json.NewEncoder(w).Encode(res)
-			return
-		}
-		for _, u := range memb.TargetMembers {
-			if u.District == uint(n) && !strings.Contains(recp, u.PhoneNumber) {
-				if recp == "" {
-					recp += u.PhoneNumber
-				} else {
-					recp += ","
-					recp += u.PhoneNumber
+	if len(bulk.District)!=0  {
+		for _,g:=range bulk.District{
+			n, err := strconv.ParseInt(g, 10, 64)
+			if err != nil {
+				res := struct{ Error string }{Error: err.Error()}
+				json.NewEncoder(w).Encode(res)
+				return
+			}
+			for _, u := range memb.TargetMembers {
+				if u.District == uint(n) && !strings.Contains(recp, u.PhoneNumber) {
+					if recp == "" {
+						recp += u.PhoneNumber
+					} else {
+						recp += ","
+						recp += u.PhoneNumber
+					}
 				}
 			}
 		}
 	}
-	if bulk.Group != ""  {
-		n, err := strconv.ParseInt(bulk.Group, 10, 64)
-		if err != nil {
-			res := struct{ Error string }{Error: err.Error()}
-			json.NewEncoder(w).Encode(res)
-			return
-		}
-		for _, u := range memb.TargetMembers {
-			for _,g:=range u.Group{
-				if g == uint(n) {
-					if !strings.Contains(recp, u.PhoneNumber) {
-						if recp == "" {
-							recp += u.PhoneNumber
-						} else {
-							recp += ","
-							recp += u.PhoneNumber
+	if len(bulk.Group)!= 0  {
+		for _,g:=range bulk.Group{
+			n, err := strconv.ParseInt(g, 10, 64)
+			if err != nil {
+				res := struct{ Error string }{Error: err.Error()}
+				json.NewEncoder(w).Encode(res)
+				return
+			}
+			for _, u := range memb.TargetMembers {
+				for _,g:=range u.Group{
+					if g == uint(n) {
+						if !strings.Contains(recp, u.PhoneNumber) {
+							if recp == "" {
+								recp += u.PhoneNumber
+							} else {
+								recp += ","
+								recp += u.PhoneNumber
+							}
 						}
+						break
 					}
-					break
-				}
-			}			
+				}			
+			}
 		}
 	}
 	if recp == "" {
