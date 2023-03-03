@@ -21,9 +21,8 @@ services:
     networks:
       - bulk
     volumes:
-      - ./config:/etc/mongo/
       - ./data:/data/db
-    command: ["mongod","--config","/etc/mongo/mongod.conf"]
+    command: ["/usr/bin/mongod","--bind_ip_all"]
 
 networks:
   bulk:
