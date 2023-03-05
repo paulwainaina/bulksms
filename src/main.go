@@ -23,12 +23,13 @@ import (
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 var (
 	tpl    *template.Template
 	auth   = session.NewSessionManager()
-	client *mongo.Client
+	db *mongo.Database
 	memb   *members.Members
 	group  *groups.Groups
 	dist   *districts.Districts
@@ -355,37 +356,55 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading the .env file")
 	}
-	client, err = mongo.NewClient(options.Client().ApplyURI(string("mongodb://" + os.Getenv("MONGO_HOST") + ":" + os.Getenv("MONGO_PORT"))))
+	client, err := mongo.NewClient(options.Client().ApplyURI(string("mongodb://" + os.Getenv("MONGO_HOST") + ":" + os.Getenv("MONGO_PORT")+"/?directConnection=true")))
 	if err != nil {
 		log.Fatal(err)
 	}
-	ctx, _ := context.WithTimeout(context.TODO(), 10*time.Second)
-	err = client.Connect(ctx)
+	err = client.Connect(context.TODO())
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer client.Disconnect(ctx)
-	/*p, err := os.Getwd()
-	if err == nil {
-		fmt.Println(p)
-	}*/
+	defer client.Disconnect(context.TODO())
+	db=client.Database(os.Getenv("DB"))
+	names,err := db.ListCollectionNames(context.TODO(),bson.D{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	exists :=false
+	for _,name:=range names{
+		if name=="user"{
+			exists=true
+		}
+	}
+	if !exists{
+		db.CreateCollection(context.TODO(),"user")
+		h,_:=users.HashPassword(os.Getenv("DefaultPassword"))
+		user:=users.User{Email:os.Getenv("DefaultEmail"),Password:h}
+		col:= db.Collection("user")
+		_,err:=col.InsertOne(context.TODO(),user)
+		if err != nil {
+			log.Fatal("Error initializing users")
+		}
+	}
+	
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets"))))
 
-	users := users.NewUsers(auth, client)
+	users := users.NewUsers(auth, db)
+
 	http.Handle("/users", middleware(http.HandlerFunc(users.ServeHTTP)))
 	http.Handle("/users/", middleware(http.HandlerFunc(users.ServeHTTP)))
 	http.Handle("/login", middleware(http.HandlerFunc(users.ServeHTTP)))
 
-	memb = members.NewMembers(client)
+	memb = members.NewMembers(db)
 	http.Handle("/members", middleware(http.HandlerFunc(memb.ServeHTTP)))
 	http.Handle("/members/", middleware(http.HandlerFunc(memb.ServeHTTP)))
 	http.Handle("/searchmembers", middleware(http.HandlerFunc(memb.ServeHTTP)))
 
-	group = groups.NewGroups(client)
+	group = groups.NewGroups(db)
 	http.Handle("/groups", middleware(http.HandlerFunc(group.ServeHTTP)))
 	http.Handle("/groups/", middleware(http.HandlerFunc(group.ServeHTTP)))
 
-	dist = districts.NewDistricts(client)
+	dist = districts.NewDistricts(db)
 	http.Handle("/districts", middleware(http.HandlerFunc(dist.ServeHTTP)))
 	http.Handle("/districts/", middleware(http.HandlerFunc(dist.ServeHTTP)))
 

@@ -1,6 +1,7 @@
 services:
   bulksms:
     container_name: bulksms
+    image: paulwainaina/bulksms:1.0
     restart: always
     build: ./src
     ports:

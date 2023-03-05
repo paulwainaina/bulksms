@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"regexp"
 	"sort"
 	"strconv"
@@ -60,13 +59,12 @@ func (g *Group) UnmarshalJSON(data []byte) error {
 type Groups struct {
 	TargetGroups []*Group
 	pattern       *regexp.Regexp
-	db            *mongo.Client
+	db            *mongo.Database
 }
 var (
 	groupCollection = "group"
 )
-func NewGroups(client *mongo.Client) *Groups {
-	db := client.Database(os.Getenv("DB"))
+func NewGroups(db *mongo.Database) *Groups {
 	col := db.Collection(groupCollection)
 	result, err := col.Find(context.TODO(), bson.M{})
 	mem := make([]*Group, 0)
@@ -77,7 +75,7 @@ func NewGroups(client *mongo.Client) *Groups {
 			fmt.Println("Error parsing groups data " + err.Error())
 		}
 	}
-	return &Groups{TargetGroups: mem, pattern: regexp.MustCompile(`^/groups/(\d+)/?`), db: client}
+	return &Groups{TargetGroups: mem, pattern: regexp.MustCompile(`^/groups/(\d+)/?`), db:db}
 }
 
 func (groups *Groups) GenerateNewID() uint {
@@ -107,7 +105,7 @@ func (groups *Groups) AddGroup(memb Group) (*Group, error) {
 		return &Group{}, fmt.Errorf("new group cannot have an id %v ", memb.ID)
 	}
 	memb.ID = groups.GenerateNewID()
-	col := *groups.db.Database(os.Getenv("DB")).Collection(groupCollection)
+	col := groups.db.Collection(groupCollection)
 	_, err := col.InsertOne(context.TODO(), memb)
 	if err != nil {
 		return &Group{}, err
@@ -128,7 +126,7 @@ func (groups *Groups) GetGroupByID(id uint) (*Group, error) {
 func (groups *Groups) DeleteGroupByID(id uint) (*Group, error) {
 	for i, m := range groups.TargetGroups {
 		if m.ID == id {
-			col := *groups.db.Database(os.Getenv("DB")).Collection(groupCollection)
+			col := groups.db.Collection(groupCollection)
 			_, err := col.DeleteOne(context.TODO(), bson.M{"ID": id})
 			if err != nil {
 				return &Group{}, err
@@ -143,7 +141,7 @@ func (groups *Groups) DeleteGroupByID(id uint) (*Group, error) {
 func (groups *Groups) UpdateGroup(memb Group) (*Group, error) {
 	for _, m := range groups.TargetGroups {
 		if m.ID == memb.ID {
-			col := groups.db.Database(os.Getenv("DB")).Collection(groupCollection)
+			col := groups.db.Collection(groupCollection)
 			_, err := col.UpdateOne(context.TODO(), bson.M{"ID": m.ID},
 				bson.M{"$set": bson.M{
 					"Name":        memb.Name,

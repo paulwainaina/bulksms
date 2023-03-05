@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"regexp"
 	"sort"
 	"strconv"
@@ -56,13 +55,12 @@ func (d *District) UnmarshalJSON(data []byte) error {
 type Districts struct {
 	TargetDistricts []*District
 	pattern       *regexp.Regexp
-	db            *mongo.Client
+	db            *mongo.Database
 }
 var (
 	districtCollection = "district"
 )
-func NewDistricts(client *mongo.Client) *Districts {
-	db := client.Database(os.Getenv("DB"))
+func NewDistricts(db *mongo.Database) *Districts {
 	col := db.Collection(districtCollection)
 	result, err := col.Find(context.TODO(), bson.M{})
 	mem := make([]*District, 0)
@@ -73,7 +71,7 @@ func NewDistricts(client *mongo.Client) *Districts {
 			fmt.Println("Error parsing districts data " + err.Error())
 		}
 	}
-	return &Districts{TargetDistricts: mem, pattern: regexp.MustCompile(`^/districts/(\d+)/?`), db: client}
+	return &Districts{TargetDistricts: mem, pattern: regexp.MustCompile(`^/districts/(\d+)/?`), db: db}
 }
 
 func (districts *Districts) GenerateNewID() uint {
@@ -103,7 +101,7 @@ func (districts *Districts) AddDistrict(memb District) (*District, error) {
 		return &District{}, fmt.Errorf("new district cannot have an id %v ", memb.ID)
 	}
 	memb.ID = districts.GenerateNewID()
-	col := *districts.db.Database(os.Getenv("DB")).Collection(districtCollection)
+	col := districts.db.Collection(districtCollection)
 	_, err := col.InsertOne(context.TODO(), memb)
 	if err != nil {
 		return &District{}, err
@@ -124,7 +122,7 @@ func (districts *Districts) GetDistrictByID(id uint) (*District, error) {
 func (districts *Districts) DeleteDistrictByID(id uint) (*District, error) {
 	for i, m := range districts.TargetDistricts {
 		if m.ID == id {
-			col := *districts.db.Database(os.Getenv("DB")).Collection(districtCollection)
+			col := districts.db.Collection(districtCollection)
 			_, err := col.DeleteOne(context.TODO(), bson.M{"ID": id})
 			if err != nil {
 				return &District{}, err
@@ -139,7 +137,7 @@ func (districts *Districts) DeleteDistrictByID(id uint) (*District, error) {
 func (districts *Districts) UpdateDistrict(memb District) (*District, error) {
 	for _, m := range districts.TargetDistricts {
 		if m.ID == memb.ID {
-			col := districts.db.Database(os.Getenv("DB")).Collection(districtCollection)
+			col := districts.db.Collection(districtCollection)
 			_, err := col.UpdateOne(context.TODO(), bson.M{"ID": m.ID},
 				bson.M{"$set": bson.M{
 					"Name":        memb.Name,

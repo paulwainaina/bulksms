@@ -69,7 +69,7 @@ type Users struct {
 	systemUsers []*User
 	pattern     *regexp.Regexp
 	authSession *session.SessionManager
-	db          *mongo.Client
+	db          *mongo.Database
 }
 
 var (
@@ -86,43 +86,18 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func NewUsers(auth *session.SessionManager, client *mongo.Client) *Users {
-	db := client.Database(os.Getenv("DB"))
+func NewUsers(auth *session.SessionManager, db *mongo.Database) *Users {
 	users := make([]*User, 0)
-	names,err := db.ListCollectionNames(context.TODO(),bson.D{})
+	col := db.Collection(userCollection)
+	result, err := col.Find(context.TODO(), bson.M{})
 	if err != nil {
-		fmt.Println(err)
-		log.Fatal("Error loading collections")
-	}
-	exists :=false
-	for _,name:=range names{
-		if name==userCollection{
-			exists=true
+		log.Fatal(err.Error())
+	} else {
+		if err = result.All(context.TODO(), &users); err != nil {
+			log.Fatal("Error parsing users data " + err.Error())
 		}
 	}
-	if !exists{
-		db.CreateCollection(context.TODO(),userCollection)
-		h,_:=HashPassword(os.Getenv("DefaultPassword"))
-		user:=User{Email:os.Getenv("DefaultEmail"),Password:h}
-		col:= db.Collection(userCollection)
-		_,err:=col.InsertOne(context.TODO(),user)
-		if err != nil {
-			log.Fatal("Error initializing users")
-		}else{
-			users = append(users, &user)
-		}
-	}else{
-		col := db.Collection(userCollection)
-		result, err := col.Find(context.TODO(), bson.M{})
-		if err != nil {
-			log.Fatal(err.Error())
-		} else {
-			if err = result.All(context.TODO(), &users); err != nil {
-				log.Fatal("Error parsing users data " + err.Error())
-			}
-		}
-	}
-	return &Users{systemUsers: users, pattern: regexp.MustCompile(`^/users/(\d+)/?`), authSession: auth, db: client}
+	return &Users{systemUsers: users, pattern: regexp.MustCompile(`^/users/(\d+)/?`), authSession: auth, db:db}
 }
 
 func (users *Users) GenerateNewID() uint64 {
@@ -159,7 +134,7 @@ func (users *Users) AddUser(usr User) (*User, error) {
 	usr.ID = users.GenerateNewID()
 	h, _ := HashPassword(usr.Password)
 	usr.Password = h
-	col := *users.db.Database(os.Getenv("DB")).Collection(userCollection)
+	col := users.db.Collection(userCollection)
 	_, err := col.InsertOne(context.TODO(), usr)
 	if err != nil {
 		return &User{}, err
@@ -189,7 +164,7 @@ func (users *Users) GetUserByEmail(email string) (*User, error) {
 func (users *Users) DeleteUserByID(id uint64) (*User, error) {
 	for i, m := range users.systemUsers {
 		if m.ID == id {
-			col := *users.db.Database(os.Getenv("DB")).Collection(userCollection)
+			col := users.db.Collection(userCollection)
 			_, err := col.DeleteOne(context.TODO(), bson.M{"ID": id})
 			if err != nil {
 				return &User{}, err
@@ -204,7 +179,7 @@ func (users *Users) DeleteUserByID(id uint64) (*User, error) {
 func (users *Users) UpdateUser(usr User) (*User, error) {
 	for _, m := range users.systemUsers {
 		if m.ID == usr.ID {
-			col := users.db.Database(os.Getenv("DB")).Collection(userCollection)
+			col := users.db.Collection(userCollection)
 			_, err := col.UpdateOne(context.TODO(), bson.M{"ID": usr.ID},
 				bson.M{"$set": bson.M{
 					"Name":  usr.Name,

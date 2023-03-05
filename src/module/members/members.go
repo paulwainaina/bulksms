@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"regexp"
 	"sort"
 	"strconv"
@@ -164,15 +163,14 @@ func (member *Member) UnmarshalJSON(data []byte) error {
 type Members struct {
 	TargetMembers []*Member
 	pattern       *regexp.Regexp
-	db            *mongo.Client
+	db            *mongo.Database
 }
 
 var (
 	memberCollection = "member"
 )
 
-func NewMembers(client *mongo.Client) *Members {
-	db := client.Database(os.Getenv("DB"))
+func NewMembers(db *mongo.Database) *Members {
 	col := db.Collection(memberCollection)
 	result, err := col.Find(context.TODO(), bson.M{})
 	mem := make([]*Member, 0)
@@ -183,7 +181,7 @@ func NewMembers(client *mongo.Client) *Members {
 			fmt.Println("Error parsing purchases data " + err.Error())
 		}
 	}
-	return &Members{TargetMembers: mem, pattern: regexp.MustCompile(`^/members/(\d+)/?`), db: client}
+	return &Members{TargetMembers: mem, pattern: regexp.MustCompile(`^/members/(\d+)/?`), db: db}
 }
 
 func (members *Members) GenerateNewID() uint64 {
@@ -221,7 +219,7 @@ func (members *Members) AddMember(memb Member) (*Member, error) {
 		}
 	}
 	memb.ID = members.GenerateNewID()
-	col := *members.db.Database(os.Getenv("DB")).Collection(memberCollection)
+	col := members.db.Collection(memberCollection)
 	_, err := col.InsertOne(context.TODO(), memb)
 	if err != nil {
 		return &Member{}, err
@@ -251,7 +249,7 @@ func (members *Members) GetMemberByPhone(phonenumber string) (*Member, error) {
 func (members *Members) DeleteMemberByID(id uint64) (*Member, error) {
 	for i, m := range members.TargetMembers {
 		if m.ID == id {
-			col := *members.db.Database(os.Getenv("DB")).Collection(memberCollection)
+			col := members.db.Collection(memberCollection)
 			_, err := col.DeleteOne(context.TODO(), bson.M{"ID": id})
 			if err != nil {
 				return &Member{}, err
@@ -266,7 +264,7 @@ func (members *Members) DeleteMemberByID(id uint64) (*Member, error) {
 func (members *Members) UpdateMember(memb Member) (*Member, error) {
 	for _, m := range members.TargetMembers {
 		if m.ID == memb.ID {
-			col := members.db.Database(os.Getenv("DB")).Collection(memberCollection)
+			col := members.db.Collection(memberCollection)
 			_, err := col.UpdateOne(context.TODO(), bson.M{"ID": m.ID},
 				bson.M{"$set": bson.M{
 					"Name":           memb.Name,
